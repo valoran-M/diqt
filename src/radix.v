@@ -36,7 +36,7 @@ Section Radix.
     end.
 
   Theorem gempty:
-    forall (i: positive), get i (empty) = None.
+    forall (i: positive), get i empty = None.
   Proof.
     intro i. case i; reflexivity.
   Qed.
