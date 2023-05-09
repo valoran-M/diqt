@@ -23,9 +23,11 @@ Section Hashtable.
 
   Variable hash: A -> int.
 
-  Definition t := PArray.array (list (A * B)).
-
-  Print max_length.
+  Definition bucket := list (A * B).
+  Definition table := PArray.array bucket.
+  
+  (* Inductive hashtab : Set := hash_tab : int -> table -> hashtab. *)
+  Record t : Set := hash_tab { capacity : int; size : int; hashtab : table }.
 
   Fixpoint power_2_above' (n: nat) (x p :int) {struct n} : int :=
     match n with
@@ -40,17 +42,18 @@ Section Hashtable.
 
   Definition create (initial_size: int) : t :=
     let size := power_2_above initial_size 16 in
-    make size [].
+    hash_tab size 0 (make size []).
 
   Definition key_index (h: t) (k: A) :=
-    (hash k) land (PArray.length h - 1).
+    (hash k) land (PArray.length (hashtab h) - 1).
 
-  Definition add (key: A) (v: B) (h: t) :=
+  Definition add (h: t) (key: A) (v: B) :=
+    let tab := hashtab h in
     let i := key_index h key in
-    let bucket := get h i in
-    set h i ((key, v) :: bucket).
+    let bucket := get tab i in
+    set tab i ((key, v) :: bucket).
 
-  Fixpoint find_rec (l: list (A * B)) (key: A) : option B :=
+  Fixpoint find_rec (l: bucket) (key: A) : option B :=
     match l with
     | [] => None
     | (k', v) :: l' => if eq k' key then Some v else find_rec l' key
@@ -58,7 +61,7 @@ Section Hashtable.
 
   Definition find (key: A) (h: t) : option B :=
     let i := key_index h key in
-    let bucket := get h i in
+    let bucket := get (hashtab h) i in
     find_rec bucket key.
 
 End Hashtable.
