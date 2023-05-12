@@ -30,6 +30,29 @@ Section Dict.
     | None   => set h_k [(k, e)] d
     | Some l => set h_k ((k, e)::l) d
     end.
+  
+  Search reflect.
+
+  Lemma eq_true:
+    forall (k1 k2 : A), k1 = k2 -> eq k1 k2 = true.
+  Proof.
+    intros k1 k2 H.
+    now case eq_spec.
+  Qed.
+
+  Lemma eq_false:
+    forall (k1 k2 : A), k1 <> k2 -> eq k1 k2 = false.
+  Proof.
+    intros k1 k2 H.
+    now case eq_spec.
+  Qed.
+
+  Lemma eq_refl:
+    forall (k : A), k = k -> eq k k = true.
+  Proof.
+    intros k H.
+    now case eq_spec.
+  Qed.
 
   Theorem dempty:
     forall (k: A), find k empty = None.
