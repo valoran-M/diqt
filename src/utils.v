@@ -32,15 +32,8 @@ Qed.
 Lemma of_Z_add:
   forall (u v: Z), of_Z (u + v)%Z = of_Z u + of_Z v.
 Proof.
-  intros u v. unfold of_Z. case u, v; simpl; try easy.
-  now rewrite add_comm, add_neutral.
-  now rewrite add_comm, add_neutral.
-  now rewrite add_neutral.
-  admit.
-  admit.
-  now rewrite add_neutral.
-  admit.
-  admit.
+  induction u.
+  simpl. intros v.  apply Z.add_0_l. Search (0 + _ = _)%Z.
 Admitted.
 
 Lemma fold_int_aux:
@@ -116,11 +109,14 @@ Proof.
   generalize (proj2 (to_Z_bounded e)).
   pattern (to_Z e) at 1 2.
   elim Z2Nat.id. 2: apply to_Z_bounded.
-  induction (Z.to_nat (to_Z e)).
-  easy.
+  induction (Z.to_nat (to_Z e)). easy.
   rewrite Nat2Z.inj_succ.
   unfold Z.succ. intros Hs.
   rewrite of_Z_add. change (of_Z 1) with 1. simpl.
+  unfold fold_int, fold_int'. simpl cont.
+
+
+  case (i <? of_Z (Z.of_nat n) + 1).
 Admitted.
 
 Definition v := fold_int (fun n acc => n :: acc ) 3 [].

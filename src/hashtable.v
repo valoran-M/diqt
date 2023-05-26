@@ -12,6 +12,25 @@ Open Scope uint63_scope.
 Print int.
 Check to_Z.
 
+Lemma eqbP_false_to_Z:
+  forall x y, x =? y = false <-> to_Z x <> to_Z y.
+Proof.
+  intros x y.
+  split.
+  + intros H. case (eqbP x y) in H. discriminate. assumption.
+  + intros H. case (eqbP x y). intros H'. contradiction H.
+    easy.
+Qed.
+
+Lemma eqbP_true_to_Z:
+  forall x y, x =? y = true <-> to_Z x = to_Z y.
+Proof.
+  intros x y.
+  split.
+  + intros H. case (eqbP x y) in H; try discriminate. assumption.
+  + intros H. case (eqbP x y); try easy. 
+Qed.
+
 Section Hashtable.
   Context {A B: Set}.
   Variable eq: A -> A -> bool.
@@ -99,10 +118,17 @@ Section Hashtable.
 
   Lemma key_index_max:
     forall (h: t) (k: int),
+    (length h) =? 0 = false ->
     (to_Z (key_index h k) < to_Z (PArray.length (hashtab h)))%Z.
   Proof.
-    admit.
-  Admitted.
+    intros h k H.
+    unfold key_index, length. rewrite mod_spec.
+    apply Z.mod_pos_bound.
+    generalize (to_Z_bounded (PArray.length (hashtab h))).
+    rewrite eqbP_false_to_Z in H. change (to_Z 0) with 0%Z in H.
+    intros H0. apply Z.le_neq. split. apply H0.
+    unfold length in H. lia.
+  Qed.
 
   Definition get_bucket (h: t) (k: int) : bucket :=
     if length h =? 0 then []
@@ -138,20 +164,6 @@ Section Hashtable.
     else if resize_heurisitic ht then
       copy_tab ht (length ht)
     else ht.
-
-  Lemma length_resize:
-    forall (h: t),
-    (0 < to_Z (length (resize h)))%Z.
-  Proof.
-    admit.
-  Admitted.
-
-  Lemma length_resize_non_neg:
-    forall (h: t),
-    (length (resize h)) <> 0.
-  Proof.
-    admit.
-  Admitted.
 
   Definition add (h: t) (key: A) (v: B) : t :=
     let h := resize h in
@@ -210,19 +222,6 @@ Section Hashtable.
     let hash := hash key in
     find_all_rec (get_bucket h hash) hash key [].
 
-  Lemma mult_size_non_neg:
-    forall (ht: t), 
-    PArray.length (hashtab ht) =? 0 = false ->
-    PArray.length (hashtab ht) * 2 =? 0 = false.
-  Proof.
-    intros ht H.
-    case (eqbP (PArray.length (hashtab ht)) 0) as [|H'] in H; try discriminate.
-    rewrite eqb_false_spec. intro Hd. apply H'.
-    case (eqbP (PArray.length (hashtab ht) * 2) 0) as [Hd'|Hd'] in Hd;
-    rewrite mul_spec in Hd'; change (to_Z 2) with 2%Z in Hd';
-    change (to_Z 0) with 0%Z in *. 
-  Admitted.
-
   Lemma replace_bucket_length:
     forall (nt lt: table) i,
     PArray.length (replace_bucket nt lt (PArray.length nt) (PArray.length lt) i) 
@@ -238,20 +237,57 @@ Section Hashtable.
 
   Lemma copy_tab_lenght:
     forall (ht: t) (i: int),
-    length ht =? 0 = false ->
-    length (copy_tab ht i) =? 0 = false.
+    PArray.length (hashtab ht) =? 0 = false ->
+    PArray.length (hashtab (copy_tab ht i)) =? 0 = false.
   Proof.
     intros ht i H.
-    unfold copy_tab, length. simpl.
+    unfold copy_tab. simpl.
     rewrite fold_int_spec.
     induction (Z.to_nat (to_Z i)).
     + simpl. rewrite length_make.
       case (_ <=? _).
-      - now apply mult_size_non_neg.
+      - rewrite eqbP_false_to_Z in *. change (to_Z 0) with 0%Z in *.
+        rewrite mul_spec. change (to_Z 2) with 2%Z. rewrite Z.mod_small.
+        apply Z.neq_mul_0. split. unfold length in H. exact H. easy.
+        generalize (leb_length _ (hashtab ht)). rewrite leb_spec.
+        generalize (to_Z_bounded (PArray.length (hashtab ht))). cbn. lia.
       - reflexivity.
     + simpl.
       rewrite replace_bucket_length.
       apply IHn.
+  Qed.
+
+  (* Lemma copy_tab_lenght: *)
+  (*   forall (ht: t) (i: int), *)
+  (*   length ht =? 0 = false -> *)
+  (*   length (copy_tab ht i) =? 0 = false. *)
+  (* Proof. *)
+  (*   intros ht i H. *)
+  (*   unfold copy_tab, length. simpl. *)
+  (*   rewrite fold_int_spec. *)
+  (*   induction (Z.to_nat (to_Z i)). *)
+  (*   + simpl. rewrite length_make. *)
+  (*     case (_ <=? _). *)
+  (*     - rewrite eqbP_false_to_Z in *. change (to_Z 0) with 0%Z in *. *)
+  (*       rewrite mul_spec. change (to_Z 2) with 2%Z. rewrite Z.mod_small. *)
+  (*       apply Z.neq_mul_0. split. unfold length in H. exact H. easy. *)
+  (*       generalize (leb_length _ (hashtab ht)). rewrite leb_spec. *)
+  (*       generalize (to_Z_bounded (PArray.length (hashtab ht))). cbn. lia. *)
+  (*     - reflexivity. *)
+  (*   + simpl. *)
+  (*     rewrite replace_bucket_length. *)
+  (*     apply IHn. *)
+  (* Qed. *)
+
+  Lemma length_resize_non_neg:
+    forall (h: t),
+    (length (resize h)) =? 0 = false.
+  Proof.
+    intros h. unfold resize.
+    case (length h =? 0) eqn:H. now simpl.
+    case (resize_heurisitic h).
+    - unfold length. now rewrite copy_tab_lenght.
+    - now unfold length in *.
   Qed.
 
   Lemma fold_right_length:
@@ -349,7 +385,52 @@ Section Hashtable.
       now apply fold_right_length.
     + rewrite get_set_other. exact IHb. now rewrite eqb_false_spec in Hm.
   Qed.
+ 
+  Lemma length_rect_non_neg:
+    forall ht n,
+    length ht =? 0 = false ->
+    PArray.length
+      (nat_rect (fun _ : nat => table) (make (length ht * 2) [])
+        (fun (n0 : nat) (acc : table) =>
+          replace_bucket acc (hashtab ht) (PArray.length acc) 
+          (length ht) (of_Z (Z.of_nat n0))) n) =? 0 = false.
+  Proof.
+    intros ht n H.
+    induction n. 
+    + simpl. rewrite length_make.
+      case (length ht * 2 <=? max_length) eqn:H'.
+      rewrite eqbP_false_to_Z in *. change (to_Z 0) with 0%Z in *.
+      rewrite mul_spec. change (to_Z 2) with 2%Z.
+      rewrite Z.mod_small. lia.
+      generalize (leb_length _ (hashtab ht)). rewrite leb_spec.
+      generalize (to_Z_bounded (length ht)). cbn. lia.
+      rewrite eqbP_false_to_Z. cbn. easy.
+    + simpl. rewrite replace_bucket_length. apply IHn.
+  Qed.
 
+  Lemma length_rect_min:
+    forall ht n,
+    length ht <=?
+      PArray.length
+        (nat_rect (fun _ : nat => table) (make (length ht * 2) [])
+          (fun (n0 : nat) (acc : table) =>
+            replace_bucket acc (hashtab ht) (PArray.length acc) 
+            (length ht) (of_Z (Z.of_nat n0))) n) = true.
+  Proof.
+    induction n. 
+    + simpl. rewrite length_make.
+      case (length ht * 2 <=? max_length) eqn:H.
+      generalize (leb_length _ (hashtab ht)).
+      rewrite 2!leb_spec, mul_spec. change (to_Z 2) with 2%Z. 
+      rewrite Z.mod_small. generalize (to_Z_bounded (length ht)). lia.
+      split. generalize (to_Z_bounded (length ht)). lia.
+      apply Z.le_lt_trans with (m:= ((to_Z max_length) * 2)%Z).
+      generalize (leb_length _ (hashtab ht)). rewrite leb_spec.
+      unfold length. lia. cbn. lia.
+      unfold length. apply leb_length.
+    + simpl. rewrite replace_bucket_length. apply IHn.
+  Qed.
+      
   Lemma copy_tab_correct:
     forall (ht: t) (k: A) (i: int),
       length ht =? 0 = false ->
@@ -360,24 +441,42 @@ Section Hashtable.
     2: generalize (to_Z_bounded (hash k mod PArray.length (hashtab ht))); lia.
     2: generalize (to_Z_bounded i); lia.
     unfold copy_tab. rewrite fold_int_spec.
+    generalize (to_Z_bounded i). intros Hb. destruct Hb as [_ HM].
+    rewrite Z2Nat.inj_lt in HM. 3: cbn; lia. 2: generalize (to_Z_bounded i); lia.
     induction (Z.to_nat (to_Z i)).
     + generalize (to_Z_bounded (hash k)). intros Hb.
-      rewrite mod_spec, Z2Nat.inj_mod. lia. easy.
+      rewrite mod_spec, Z2Nat.inj_mod. lia. apply Hb.
       generalize (to_Z_bounded (PArray.length (hashtab ht))).
-      now intros Hb'.
+      intros Hb'. apply Hb'.
     + case (Z.to_nat φ (hash k mod PArray.length (hashtab ht)) <? n)%nat eqn:Hn.
-      - simpl. intros _. rewrite replace_bucket_correct'. apply IHn.
-        now rewrite Nat.ltb_lt in Hn.
-        induction n. simpl. rewrite length_make.
-        * case (_ <=? max_length). 2: apply leb_length.
-          rewrite leb_spec, mul_spec. change (to_Z 2) with 2%Z.
-          rewrite Z.mod_small. generalize (to_Z_bounded (length ht)). lia.
-          split. generalize (to_Z_bounded (length ht)). lia.
-          apply Z.le_lt_trans with (m:=(to_Z PArray.max_length * 2)%Z).
-          unfold length. apply Zmult_le_compat_r.
-          rewrite <- leb_spec. apply leb_length. lia. cbn. easy.
-        * simpl. admit.
-      - simpl. intro H0. apply replace_bucket_correct. admit.
+      - simpl. intros _. rewrite replace_bucket_correct2. apply IHn.
+        lia. rewrite Nat.ltb_lt in Hn. exact Hn. exact H.
+        apply length_rect_non_neg. assumption.
+        rewrite <- eqb_false_spec, eqbP_false_to_Z.
+        rewrite Nat.ltb_lt in Hn. rewrite Nat2Z.inj_lt, Z2Nat.id in Hn.
+        2: generalize (to_Z_bounded (hash k mod PArray.length (hashtab ht))); lia.
+        rewrite of_Z_spec, Z.mod_small. 2: lia.
+        unfold length. lia.
+        rewrite <- leb_spec. apply length_rect_min.
+      - simpl. intro H0. apply replace_bucket_correct1. exact H.
+        apply length_rect_non_neg. assumption.
+        rewrite <- eqb_spec, eqbP_true_to_Z, of_Z_spec, Z.mod_small.
+        rewrite Nat.ltb_ge, Nat2Z.inj_le, Z2Nat.id in Hn.
+        2: generalize (to_Z_bounded (hash k mod PArray.length (hashtab ht))); lia.
+        unfold length. lia. lia. 
+        clear IHn H0. rewrite Nat.ltb_ge in Hn.
+        induction n.
+        * simpl. unfold find_all, get_bucket. simpl.
+          case (length _ =? 0). now simpl.
+          rewrite get_make. now simpl.
+        * simpl. rewrite replace_bucket_correct2. apply IHn. 
+          lia. lia. assumption. now rewrite length_rect_non_neg.
+          rewrite <- eqb_false_spec, eqbP_false_to_Z.
+          rewrite of_Z_spec, Z.mod_small. 2: lia.
+          rewrite Nat.le_succ_l, Nat2Z.inj_lt, Z2Nat.id in Hn.
+          unfold length. lia.
+          generalize (to_Z_bounded (hash k mod PArray.length (hashtab ht))). lia.
+          now rewrite <- leb_spec, length_rect_min.
   Qed.
 
   Lemma find_all_resize:
@@ -387,12 +486,13 @@ Section Hashtable.
     intros h k.
     case (PArray.length (hashtab h) =? 0) eqn:Heqb.
     - unfold resize, find_all, get_bucket.
-      rewrite Heqb.
+      unfold length. rewrite Heqb.
       set (x:=make 16 []). simpl. unfold x.
       now rewrite get_make.
-    - unfold resize. rewrite Heqb.
+    - unfold resize, length. rewrite Heqb.
       case resize_heurisitic. 2: reflexivity.
-      apply find_all_copy_tab.
+      apply copy_tab_correct.
+      unfold length. exact Heqb.
       rewrite ltb_spec, mod_spec.
       apply Z.mod_pos_bound.
       generalize (to_Z_bounded (PArray.length (hashtab h))).
@@ -403,7 +503,7 @@ Section Hashtable.
   Theorem hempty:
     forall (k: A) (size: int), find (create size) k = None.
   Proof.
-    intros k i. unfold create, find, get_bucket. simpl.
+    intros k i. unfold create, find, get_bucket, length. simpl.
     rewrite length_make.
     case (power_2_above i 16 <=? max_length).
     case eqb. now simpl. now rewrite get_make.
@@ -412,7 +512,7 @@ Section Hashtable.
 
   Lemma key_index_eq:
     forall (h1 h2: t) (k: A), 
-    PArray.length (hashtab h1) = PArray.length (hashtab h2) ->
+    length h1 = length h2 ->
     key_index h1 (hash k) = key_index h2 (hash k).
   Proof.
     intros h1 h2 k H. unfold key_index.
@@ -431,51 +531,66 @@ Section Hashtable.
     rewrite (key_index_eq (add h k v) (resize h)).
     unfold add; simpl. rewrite get_set_same.
     simpl. rewrite eqb_refl. rewrite eq_refl. easy.
-    rewrite ltb_spec. apply key_index_max.
+    rewrite ltb_spec. apply key_index_max, length_resize_non_neg.
     unfold add; simpl. apply length_set.
-    2:unfold add; simpl; rewrite length_set.
-    all:apply length_resize_non_neg.
+    2:unfold add, length; simpl; rewrite length_set.
+    all:rewrite <- eqb_false_spec; apply length_resize_non_neg.
   Qed.
 
   Theorem find_add_diff:
     forall (k k': A) (v: B) (h: t),
-    k <> k' -> find_all (add h k v) k' = find_all h k'.
+    k' <> k -> find_all (add h k v) k' = find_all h k'.
   Proof.
     intros k k' v h Hdiff.
-    unfold add, find_all, get_bucket. simpl.
-    rewrite length_set.
-    rewrite eqb_false_complete; [|apply length_resize_non_neg].
+    unfold add, find_all, get_bucket, length. simpl.
+    rewrite length_set. fold (length (resize h)).
+    rewrite length_resize_non_neg.
     case (PArray.length (hashtab h) =? 0) eqn:H.
-    + unfold resize, key_index. rewrite H. set (m:=make 16 []).
+    + unfold resize, key_index, length. rewrite H. set (m:=make 16 []).
       simpl.
       rewrite length_set. simpl.
-      case (hash k' land 15 =? hash k land 15) eqn:Hhk.
+      case (hash k' mod 16 =? hash k mod 16) eqn:Hhk.
       - apply eqb_correct in Hhk.
         rewrite Hhk, get_set_same. simpl.
         rewrite eq_false. 
         assert ((hash k' =? hash k) && false = false).
         apply andb_false_iff; now right.
-        rewrite H0. unfold m. rewrite get_make. now simpl.
-        now apply neq_sym.
-        rewrite ltb_spec. unfold m. simpl. admit.
+        rewrite H0. unfold m. rewrite get_make. now simpl. easy.
+        rewrite ltb_spec. unfold m. simpl. rewrite mod_spec. 
+        change(to_Z 16) with 16%Z.
+        apply Z.mod_bound_pos. generalize (to_Z_bounded (hash k)). lia. easy.
       - unfold m. rewrite get_make, get_set_other.
         rewrite get_make. now simpl.
         rewrite  eqb_false_spec in Hhk.
         intro Hd. apply eq_sym in Hd.
         now apply Hhk.
-    + unfold resize, key_index. rewrite H. simpl.
+    + unfold resize, key_index, length. rewrite H. simpl.
       rewrite length_set.
-      case (hash k land (PArray.length (hashtab h) - 1) =? 
-            hash k' land (PArray.length (hashtab h) - 1)) eqn:Heq.
-      - apply eqb_spec in Heq. rewrite Heq, get_set_same. simpl.
-        rewrite eq_false; [|now apply neq_sym].
-        assert ((hash k' =? hash k) && false = false).
-        apply andb_false_iff; now right.
-        rewrite H0. easy. admit.
-      - apply eqb_false_spec in Heq. rewrite get_set_other. easy. easy.
-  Admitted.
-
-End Hashtable.
+      case resize_heurisitic.
+      - case (hash k mod (PArray.length (hashtab (copy_tab h (PArray.length (hashtab h))))) =? 
+            hash k' mod (PArray.length (hashtab (copy_tab h (PArray.length (hashtab h)))))) eqn:Heq.
+        * rewrite eqb_spec in Heq. rewrite Heq, get_set_same. simpl.
+          rewrite eq_false, andb_false_r. 2:exact Hdiff.
+          admit.
+          rewrite ltb_spec, mod_spec. apply Z.mod_pos_bound.
+          apply Z.le_neq. split.
+          generalize (to_Z_bounded (PArray.length (hashtab (copy_tab h (PArray.length (hashtab h)))))).
+          lia.
+          apply Z.neq_sym. change 0%Z with (to_Z 0).
+          rewrite <- eqbP_false_to_Z.
+          now rewrite copy_tab_lenght.
+        * rewrite get_set_other. 2: now rewrite eqb_false_spec in Heq.
+          fold (find_all (copy_tab h (PArray.length (hashtab h))) k).
+          admit.
+      - case (hash k mod PArray.length (hashtab h) =? 
+                hash k' mod PArray.length (hashtab h)) eqn:Heq.
+        * rewrite eqb_spec in Heq. rewrite Heq, get_set_same. simpl.
+          now rewrite eq_false, andb_false_r.
+          rewrite ltb_spec, mod_spec. apply Z.mod_pos_bound.
+          generalize (to_Z_bounded (PArray.length (hashtab h))). 
+          rewrite eqbP_false_to_Z in H. change (to_Z 0) with 0%Z in H. lia.
+        * rewrite eqb_false_spec in Heq. now rewrite get_set_other.
+  Qed.
 
 Module Type Hash_type.
   Variable A: Set.
