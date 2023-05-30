@@ -68,8 +68,8 @@ Section Hashtable.
   Qed.
 
   Inductive bucket_e : Set :=
-    | C : int -> A -> B  -> bucket_e
-  .
+    | C : int -> A -> B  -> bucket_e.
+
   Definition bucket := list (bucket_e).
   Definition table := PArray.array bucket.
   
@@ -135,7 +135,7 @@ Section Hashtable.
     else (hashtab h).[key_index h k].
 
   Definition resize_heurisitic (h: t) : bool :=
-    false. 
+    (3 * length h / 4 <=? size h) && negb (length h =? PArray.max_length).
 
   Opaque resize_heurisitic.
 
@@ -144,7 +144,7 @@ Section Hashtable.
       let (h, k, v) := e in
       if i =? h mod ls then
         a.[h mod ns <- e :: a.[h mod ns]]
-      else a) 
+      else a)
     nt lt.[i].
 
   Definition copy_tab (ht: t) (i: int) : t :=
@@ -189,8 +189,10 @@ Section Hashtable.
     match l with
     | [] => List.rev' acc
     | C h' k' v :: l' => 
-        if andb (h =? h') (eq k k')
-        then find_all_rec l' h k (v :: acc)
+        if h =? h'
+        then (if eq k k'
+              then find_all_rec l' h k (v :: acc)
+              else find_all_rec l' h k acc)
         else find_all_rec l' h k acc
     end.
 
@@ -210,9 +212,13 @@ Section Hashtable.
     intros l h k.
     induction l.
     + intros acc. simpl. apply rev_append_rev.
-    + intros acc. simpl. destruct a. case (_ && _).
-      rewrite IHl. simpl. rewrite <- app_assoc. easy.
-      apply IHl.
+    + intros acc. simpl. destruct a. case (eq k a) eqn:H.
+      - case (h =? i).
+        * rewrite IHl. simpl. rewrite <- app_assoc. easy.
+        * simpl. apply IHl.
+      - case (h =? i).
+        * rewrite IHl. reflexivity.
+        * apply IHl.
   Qed.
 
   Definition find (h: t) (key: A) : option B :=
@@ -317,10 +323,13 @@ Section Hashtable.
       case (i =? i0 mod PArray.length (hashtab lt)) eqn:Heq.
       + case (hash j =? i0) eqn:Hj.
         * rewrite eqb_spec in Hj. rewrite Hj.
-          rewrite get_set_same. simpl. rewrite eqb_refl, andb_true_l.
-          case (eq j a); rewrite 2!find_all_rec_correct in IHb; simpl in IHb;
-          rewrite 2!find_all_rec_correct; apply f_equal;
-          rewrite <- Hj; apply IHb. now apply fold_right_length.
+          rewrite get_set_same. rewrite find_all_rec_correct.
+          simpl. rewrite eqb_refl, andb_true_l.
+          case (eq j a); rewrite 2!find_all_rec_correct in IHb; simpl in IHb.
+          rewrite find_all_rec_correct. apply f_equal.
+          rewrite <- Hj. apply IHb.
+          rewrite find_all_rec_correct. rewrite <- Hj. apply IHb.
+          now apply fold_right_length.
         * simpl.
           case (i0 mod PArray.length nt =? hash j mod PArray.length nt) eqn:Hheq.
           **rewrite eqb_spec in Hheq. rewrite Hheq, get_set_same.
@@ -517,9 +526,6 @@ Section Hashtable.
     all:rewrite <- eqb_false_spec; apply length_resize_non_neg.
   Qed.
 
-  (* Lemma find_all_rec_resize: *)
-    (* find_all_rec (hashtab (resize h)).[i] *)
-
   Theorem find_add_diff:
     forall (k k': A) (v: B) (h: t),
     k' <> k -> find_all (add h k v) k' = find_all h k'.
@@ -528,7 +534,7 @@ Section Hashtable.
     assert (find_all (resize h) k' = find_all h k'). apply find_all_resize.
     unfold add, find_all, get_bucket, key_index, length in *. simpl.
     rewrite length_set in *. fold (length (resize h)) in *.
-    rewrite length_resize_non_neg in *.
+    rewrite length_resize_non_neg, find_all_rec_correct in *. simpl in *.
     case (hash k mod length (resize h) =? hash k' mod length (resize h)) eqn:Heq.
     + rewrite eqb_spec in Heq. rewrite <- Heq, get_set_same in *.
       simpl. rewrite eq_false. 2:exact Hdiff.
@@ -559,7 +565,46 @@ Module HashTable (T: Hash_type).
   Definition add {B: Set} (h: t B) (key: T.A) (v: B) :=
     add T.hash h key v.
 
-  (* Definition find {B: Set} (h: t B) (key: T.A): option B := *)
-  (*   find T.eq T.hash key h. *)
+  Definition find {B: Set} (h: t B) (key: T.A): option B :=
+    find T.eq T.hash h key.
 End HashTable.
+
+Theorem int_eq_spec:
+  forall x y : int, reflect (x = y) (eqb x y).
+Proof.
+  intros x y. case (eqb x y) eqn:H.
+  + apply ReflectT. now apply eqb_spec.
+  + apply ReflectF. now apply eqb_false_spec.
+Qed.
+
+Module Int <: Hash_type.
+  Definition A := int.
+  Definition eq := eqb.
+  Definition eq_spec := int_eq_spec.
+  Definition hash i: A := i.
+End Int.
+
+Module HashT := HashTable (Int).
+
+Let h1 := HashT.create int 16.
+Let h2 := HashT.add h1 13 1.
+Let h3 := HashT.add h2 1 12.
+Let h4 := HashT.add h3 2 12.
+Let h5 := HashT.add h4 3 12.
+Let h6 := HashT.add h5 4 12.
+Let h7 := HashT.add h6 5 12.
+Let h8 := HashT.add h7 6 12.
+Let h9 := HashT.add h8 7 12.
+Let h10 := HashT.add h9 8 12.
+Let h11 := HashT.add h10 9 12.
+Let h12 := HashT.add h11 10 12.
+Let h13 := HashT.add h12 17 12.
+Let h14 := HashT.add h13 12 12.
+
+Compute h13.
+Compute h14.
+Compute Int.eq 13 13.
+
+Eval compute in HashT.find h12 13.
+Compute HashT.find h12 1.
 

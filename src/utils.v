@@ -33,7 +33,7 @@ Lemma of_Z_add:
   forall (u v: Z), of_Z (u + v)%Z = of_Z u + of_Z v.
 Proof.
   induction u.
-  simpl. intros v.  apply Z.add_0_l. Search (0 + _ = _)%Z.
+  (* simpl. intros v.  apply Z.add_0_l. Search (0 + _ = _)%Z. *)
 Admitted.
 
 Lemma fold_int_aux:
@@ -113,7 +113,8 @@ Proof.
   rewrite Nat2Z.inj_succ.
   unfold Z.succ. intros Hs.
   rewrite of_Z_add. change (of_Z 1) with 1. simpl.
-  unfold fold_int, fold_int'. simpl cont.
+  unfold fold_int, fold_int'. generalize (Acc_intro_generator 22 acc_int 0).
+  
 
 
   case (i <? of_Z (Z.of_nat n) + 1).
