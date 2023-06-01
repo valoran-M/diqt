@@ -10,14 +10,8 @@ Section List.
   Variable A: Type.
   Variable B: Type.
 
-  Fixpoint find_snd (f : A * B -> bool) (l :list (A * B)): option B :=
-    match l with
-    | nil     => None
-    | x :: tl => if f x then Some (snd x) else find_snd f tl
-    end.
+  
 End List.
-
-Arguments find_snd : clear implicits.
 
 Lemma add_neutral:
   forall (u: int), u + 0 = u.
@@ -117,7 +111,7 @@ Proof.
   
 
 
-  case (i <? of_Z (Z.of_nat n) + 1).
+  (* case (i <? of_Z (Z.of_nat n) + 1). *)
 Admitted.
 
 Definition v := fold_int (fun n acc => n :: acc ) 3 [].

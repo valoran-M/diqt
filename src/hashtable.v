@@ -58,8 +58,6 @@ Section Hashtable.
     now case eq_spec.
   Qed.
 
-  Print eq_sym.
-
   Lemma neq_sym:
     forall (k k' : A), k <> k' -> k' <> k.
   Proof.
@@ -579,7 +577,7 @@ Qed.
 
 Module Int <: Hash_type.
   Definition A := int.
-  Definition eq := eqb.
+  Definition eq x y:= eqb x y.
   Definition eq_spec := int_eq_spec.
   Definition hash i: A := i.
 End Int.
@@ -605,6 +603,5 @@ Compute h13.
 Compute h14.
 Compute Int.eq 13 13.
 
-Eval compute in HashT.find h12 13.
 Compute HashT.find h12 1.
 
