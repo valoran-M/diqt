@@ -9,8 +9,6 @@ Import ListNotations.
 Require Import Coq.Numbers.Cyclic.Int63.Uint63.
 
 Open Scope uint63_scope.
-Print int.
-Check to_Z.
 
 Lemma eqbP_false_to_Z:
   forall x y, x =? y = false <-> to_Z x <> to_Z y.

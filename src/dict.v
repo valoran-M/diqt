@@ -133,14 +133,14 @@ Section Dict.
   Qed.
 End Dict.
 
-Module Type Hash_type.
+Module Type HashM_type.
   Variable A: Set.
   Variable eq: A -> A -> bool.
   Variable eq_spec: forall x y : A, reflect (x = y) (eq x y).
   Variable hash: A -> positive.
-End Hash_type.
+End HashM_type.
 
-Module HashTable (T: Hash_type).
+Module HashMap (T: HashM_type).
   Definition t := @t T.A.
   Definition create (B: Set) : t B :=
     empty T.A B.
@@ -150,18 +150,18 @@ Module HashTable (T: Hash_type).
 
   Definition find {B: Set} (h: t B) (key: T.A): option B :=
     find T.A T.eq B T.hash key h.
-End HashTable.
+End HashMap.
 
 Check Pos.eqb_spec.
 
-Module Int <: Hash_type.
+Module Int <: HashM_type.
   Definition A := positive.
   Definition eq x y:= Pos.eqb x y.
   Definition eq_spec := Pos.eqb_spec.
   Definition hash i: A := i.
 End Int.
 
-Module HashT := HashTable (Int).
+Module HashT := HashMap (Int).
 
 Let h1 := HashT.create positive.
 Let h2 := HashT.add h1 13 1.
