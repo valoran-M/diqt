@@ -161,4 +161,25 @@ Module Int <: Hash_type.
   Definition hash i: A := i.
 End Int.
 
+Module HashT := HashTable (Int).
 
+Let h1 := HashT.create positive.
+Let h2 := HashT.add h1 13 1.
+Let h3 := HashT.add h2 1 12.
+Let h4 := HashT.add h3 2 12.
+Let h5 := HashT.add h4 3 12.
+Let h6 := HashT.add h5 4 12.
+Let h7 := HashT.add h6 5 12.
+Let h8 := HashT.add h7 6 12.
+Let h9 := HashT.add h8 7 12.
+Let h10 := HashT.add h9 8 12.
+Let h11 := HashT.add h10 9 12.
+Let h12 := HashT.add h11 10 12.
+Let h13 := HashT.add h12 17 12.
+Let h14 := HashT.add h13 12 12.
+
+Compute h13.
+Compute h14.
+Compute Int.eq 13 13.
+
+Compute HashT.find h12 1.

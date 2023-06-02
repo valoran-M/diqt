@@ -49,4 +49,7 @@ time-of-build-both.log
 time-of-build-pretty.log
 
 # End of https://www.toptal.com/developers/gitignore/api/coq
-*Makefile*
+Makefile*
+benchmark/*.exe
+benchmark/*.ml
+benchmark/*.term
