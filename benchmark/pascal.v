@@ -42,8 +42,6 @@ Proof.
     now inversion H0.
 Qed.
 
-
-
 Module NATNAT <: Hash_type.
   Definition A := natnat.
   Definition eq n m := eqb_nn n m.
@@ -89,6 +87,15 @@ Module HBucket := HashTableBucket NATNAT.
 Module TestBucket := Test HBucket.
 
 (* Compute pascal 30 15. *)
-Time Compute TestTree.pascal_memo 200 100.
-Time Compute TestBucket.pascal_memo 200 100.
+Time Compute TestTree.pascal_memo 400 200.
+Time Compute TestBucket.pascal_memo 400 200.
+
+(* +-------------+--------+--------+--------+--------+
+   | pascal 2n n | n=50   | n=100  | n=150  | n=200  | 
+   +-------------+--------+--------+--------+--------+
+   | Radix Tree  | 0.093s | 0.331s | 0.919s | 1.917s |
+   +-------------+--------+--------+--------+--------+
+   | Bucket      | 0.032s | 0.167s | 0.462s | 1.049s | ~ / 2
+   +-------------+--------+--------+--------+--------+
+*)
 

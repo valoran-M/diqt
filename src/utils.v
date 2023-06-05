@@ -23,13 +23,6 @@ Proof.
   generalize (to_Z_bounded u). lia.
 Qed.
 
-Lemma of_Z_add:
-  forall (u v: Z), of_Z (u + v)%Z = of_Z u + of_Z v.
-Proof.
-  induction u.
-  (* simpl. intros v.  apply Z.add_0_l. Search (0 + _ = _)%Z. *)
-Admitted.
-
 Lemma fold_int_aux:
   forall (i e: int), i <? e = true-> i <? i + 1 = true.
 Proof.
@@ -43,19 +36,16 @@ Qed.
 
 
 Definition fold_int' (T: Type) (f : int -> T -> T) 
-                     (e: int) (acc: T) 
-                     (H: Acc (fun x y => y <? x = true) 0 ): T.
+                     (s e: int) (acc: T) 
+                     (H: Acc (fun x y => y <? x = true) s ): T.
 Proof.
-  revert acc H.
-  generalize 0.
+  revert s acc H.
   fix cont 3.
   intros i acc H.
   case (i <? e) eqn:Hlt. 2: exact acc.
   apply (cont (i+1) (f i acc)).
   case H. intros H0. apply H0. apply (fold_int_aux _ _ Hlt).
 Defined.
-
-Print fold_int'.
 
 Lemma acc_int:
   forall x, Acc (fun x y => y <? x = true) x.
@@ -88,7 +78,44 @@ Proof.
 Qed.
 
 Definition fold_int {T: Type} (f : int -> T -> T) (e: int) (acc: T) :=
-  fold_int' T f e acc (Acc_intro_generator 22 acc_int 0).
+  fold_int' T f 0 e acc (Acc_intro_generator 22 acc_int 0).
+
+Lemma suc_sub:
+  forall n m, 
+  m < n ->
+  (S (n - S m) = n - m)%nat.
+Proof.
+  intros n.
+  induction n; intros m Hm.
+  + contradiction (Nat.nlt_0_r m).
+  + simpl. destruct m as [| m'] eqn:Hm'.
+    now rewrite Nat.sub_0_r.
+    rewrite IHn. easy.
+    now apply Nat.succ_lt_mono.
+Qed.
+
+Lemma nat_rect_one:
+  forall T f n x acc,
+  to_Z x = Z.of_nat n ->
+  nat_rect (fun _ : nat => T) (f x acc)
+    (fun (n0 : nat) (acc0 : T) => f (of_pos (Pos.of_succ_nat (n + n0))) acc0) 0 =
+  f (of_Z (Z.of_nat (n + 0)))
+    (nat_rect (fun _ : nat => T) acc
+      (fun (n0 : nat) (acc0 : T) => f (of_Z (Z.of_nat (n + n0))) acc0) 0).
+Proof.
+  intros T f n x acc Hxn.
+  destruct n as [| n'].
+  + simpl. simpl in Hxn. change 0%Z with (to_Z 0) in Hxn.
+    assert (H: x = 0). now apply to_Z_inj.
+    now rewrite H.
+  + simpl. rewrite Nat.add_0_r.
+    assert (H:of_pos (Pos.of_succ_nat n') = of_Z (Z.of_nat (S n'))).
+    { destruct n'. easy. simpl. easy. }
+    assert (H': x = of_Z (Z.of_nat (S n'))).
+    { apply to_Z_inj. rewrite Hxn. rewrite of_Z_spec, Z.mod_small. easy.
+      rewrite <- Hxn. apply to_Z_bounded. }   
+    rewrite H, H'. easy.
+Qed.
 
 Lemma fold_int_spec :
   forall T (f : int -> T -> T) e acc,
@@ -97,28 +124,32 @@ Lemma fold_int_spec :
            (fun n acc => f (of_Z (Z.of_nat n)) acc)
            (Z.to_nat (to_Z e)).
 Proof.
-  intros T f e.
-  pattern e at 1.
-  elim of_to_Z.
-  generalize (proj2 (to_Z_bounded e)).
-  pattern (to_Z e) at 1 2.
-  elim Z2Nat.id. 2: apply to_Z_bounded.
-  induction (Z.to_nat (to_Z e)). easy.
-  rewrite Nat2Z.inj_succ.
-  unfold Z.succ. intros Hs.
-  rewrite of_Z_add. change (of_Z 1) with 1. simpl.
-  unfold fold_int, fold_int'. generalize (Acc_intro_generator 22 acc_int 0).
-  
-
-
-  (* case (i <? of_Z (Z.of_nat n) + 1). *)
-Admitted.
-
-Definition v := fold_int (fun n acc => n :: acc ) 3 [].
-
-Compute v.
-
-Definition v' := nat_rect _ [] (fun n acc => of_Z (Z.of_nat n) :: acc ) 3.
-
-Compute v'.
+  intros T f e. unfold fold_int.
+  rewrite <- (Nat.sub_0_r (Z.to_nat φ (e))).
+  generalize (Acc_intro_generator 22 acc_int 0).
+  change (fun (n : nat) (acc0 : T) => f (of_Z (Z.of_nat n)) acc0) with
+    (fun (n : nat) (acc0 : T) => f (of_Z (Z.of_nat (0 + n))) acc0).
+  cut (to_Z 0 = Z.of_nat 0). 2: easy.
+  cut (Z.of_nat 0 <= to_Z e)%Z. 2: apply to_Z_bounded.
+  generalize 0%nat.
+  intros n He Hn a. revert a n Hn He.
+  generalize 0. induction a using Acc_inv_dep.
+  simpl. intros n Hn He acc. generalize (eq_refl (x <? e)).
+  destruct (x <? e) at 2 3.
+  + intros Hx. rewrite (H (x + 1) (fold_int_aux x e Hx) (S n)).
+    replace (Z.to_nat (to_Z e) - n)%nat with (S (Z.to_nat (to_Z e) - S n)).
+    clear -Hn. simpl. induction (Z.to_nat (to_Z e) - S n)%nat as [| n0 IHn0].
+    now apply nat_rect_one.
+    simpl. rewrite <- IHn0. f_equal. rewrite Nat.add_succ_r. simpl. easy.
+    apply suc_sub. rewrite ltb_spec in Hx. rewrite Hn in Hx.
+    rewrite Nat2Z.inj_lt, Z2Nat.id. exact Hx. apply to_Z_bounded.
+    rewrite add_spec. rewrite Z.mod_small. rewrite inj_S. rewrite Hn. easy.
+    rewrite ltb_spec in Hx. generalize (to_Z_bounded e). change (to_Z 1) with 1%Z.
+    lia.
+    rewrite ltb_spec in Hx. rewrite Hn in Hx. rewrite Nat2Z.inj_succ.
+    now apply Z.le_succ_l.
+  + case ltbP. easy. rewrite Hn. intros H' _.
+    rewrite (proj2 (Nat.sub_0_le (Z.to_nat (to_Z e)) n)). easy.
+    lia.
+Qed.
 
