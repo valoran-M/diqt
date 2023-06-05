@@ -80,7 +80,3 @@ End Radix.
 
 Arguments tree A : clear implicits.
 
-Let radix': tree positive := empty.
-Let radix'2 := set 2 2 radix'.
-Compute get 2 radix'2.
-

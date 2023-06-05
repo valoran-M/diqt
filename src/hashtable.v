@@ -526,7 +526,7 @@ Section Hashtable.
     forall (k k': A) (v: B) (h: t),
     k' <> k -> find_all (add h k v) k' = find_all h k'.
   Proof.
-    intros k k' v h Hdiff. Search resize.
+    intros k k' v h Hdiff.
     assert (find_all (resize h) k' = find_all h k'). apply find_all_resize.
     unfold add, find_all, get_bucket, key_index, length in *. simpl.
     rewrite length_set in *. fold (length (resize h)) in *.
@@ -545,61 +545,4 @@ Section Hashtable.
   Qed.
 
 End Hashtable.
-
-Module Type Hash_type.
-  Variable A: Set.
-  Variable eq: A -> A -> bool.
-  Variable eq_spec: forall x y : A, reflect (x = y) (eq x y).
-  Variable hash: A -> int.
-End Hash_type.
-
-Module HashTable (T: Hash_type).
-  Definition t := @t T.A.
-  Definition create (B: Set) (initial_size: int) : t B :=
-    create initial_size.
-
-  Definition add {B: Set} (h: t B) (key: T.A) (v: B) :=
-    add T.hash h key v.
-
-  Definition find {B: Set} (h: t B) (key: T.A): option B :=
-    find T.eq T.hash h key.
-End HashTable.
-
-Theorem int_eq_spec:
-  forall x y : int, reflect (x = y) (eqb x y).
-Proof.
-  intros x y. case (eqb x y) eqn:H.
-  + apply ReflectT. now apply eqb_spec.
-  + apply ReflectF. now apply eqb_false_spec.
-Qed.
-
-Module Int <: Hash_type.
-  Definition A := int.
-  Definition eq x y:= eqb x y.
-  Definition eq_spec := int_eq_spec.
-  Definition hash i: A := i.
-End Int.
-
-Module HashT := HashTable (Int).
-
-Let h1 := HashT.create int 16.
-Let h2 := HashT.add h1 13 1.
-Let h3 := HashT.add h2 1 12.
-Let h4 := HashT.add h3 2 12.
-Let h5 := HashT.add h4 3 12.
-Let h6 := HashT.add h5 4 12.
-Let h7 := HashT.add h6 5 12.
-Let h8 := HashT.add h7 6 12.
-Let h9 := HashT.add h8 7 12.
-Let h10 := HashT.add h9 8 12.
-Let h11 := HashT.add h10 9 12.
-Let h12 := HashT.add h11 10 12.
-Let h13 := HashT.add h12 17 12.
-Let h14 := HashT.add h13 12 12.
-
-Compute h13.
-Compute h14.
-Compute Int.eq 13 13.
-
-Compute HashT.find h12 1.
 
