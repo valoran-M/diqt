@@ -139,8 +139,7 @@ Module Test (H: HashTable INTINT).
         rewrite <- Hv1, <- Hv2. rewrite <- (Nat2Z.id n), <- (Nat2Z.id m') at 1. 
         rewrite Pos.of_nat_succ. Search Pos.of_nat.
         Search (Pos.of_nat (S _)).
-        rewrite IHn. Nat2Pos.inj_succ. simpl.
-        rewrite IHn.
+  Admitted.
 
       
 
@@ -181,8 +180,8 @@ Module HBucket := HashTableBucket INTINT.
 Module TestBucket := Test HBucket.
 
 (* Compute pascal 30 15. *)
-Time Compute TestTreeNN.pascal_memo 400 200.
-Time Compute TestBucketNN.pascal_memo 400 200.
+(* Time Compute TestTreeNN.pascal_memo 400 200. *)
+(* Time Compute TestBucketNN.pascal_memo 400 200. *)
 Time Compute TestTree.pascal_memo 400 200.
 Time Compute TestBucket.pascal_memo 400 200.
 
