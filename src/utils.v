@@ -4,13 +4,32 @@ Require Import Lia.
 Require Import Coq.Numbers.Cyclic.Int63.Uint63.
 Open Scope uint63_scope.
 
+Lemma eqbP_false_to_Z:
+  forall x y, x =? y = false <-> to_Z x <> to_Z y.
+Proof.
+  intros x y.
+  split.
+  + intros H. case (eqbP x y) in H. discriminate. assumption.
+  + intros H. case (eqbP x y). intros H'. contradiction H.
+    easy.
+Qed.
+
+Lemma eqbP_true_to_Z:
+  forall x y, x =? y = true <-> to_Z x = to_Z y.
+Proof.
+  intros x y.
+  split.
+  + intros H. case (eqbP x y) in H; try discriminate. assumption.
+  + intros H. case (eqbP x y); try easy.
+Qed.
+
 Import ListNotations.
 
 Section List.
   Variable A: Type.
   Variable B: Type.
 
-  
+
 End List.
 
 Lemma add_neutral:
@@ -34,18 +53,20 @@ Proof.
   lia.
 Qed.
 
+Definition R x y := (y <? x) = true.
 
-Definition fold_int' (T: Type) (f : int -> T -> T) 
-                     (s e: int) (acc: T) 
-                     (H: Acc (fun x y => y <? x = true) s ): T.
-Proof.
-  revert s acc H.
-  fix cont 3.
-  intros i acc H.
-  case (i <? e) eqn:Hlt. 2: exact acc.
-  apply (cont (i+1) (f i acc)).
-  case H. intros H0. apply H0. apply (fold_int_aux _ _ Hlt).
-Defined.
+Definition fold_int' (T : Type) (f : int -> T -> T) (s e : int) (acc : T)
+  (H : Acc R s) :=
+(fix cont (i : int) (acc : T) (H : Acc R i) {struct H} : T :=
+   let b := i <? e in
+   (if b return ((i <? e) = b -> T)
+    then
+     fun Hb =>
+     cont (i + 1) (f i acc)
+       match H with
+       | Acc_intro _ H => H (i + 1) (fold_int_aux i e Hb)
+       end
+    else fun _ => acc) (eq_refl b)) s acc H.
 
 Lemma acc_int:
   forall x, Acc (fun x y => y <? x = true) x.
@@ -56,8 +77,8 @@ Proof.
     apply f_equal. ring. }
   intros x.
   rewrite <- H.
-  apply (Z_lt_induction 
-          (fun x => to_Z (of_Z x) = x -> 
+  apply (Z_lt_induction
+          (fun x => to_Z (of_Z x) = x ->
           Acc (fun x y : int => (y <? x) = true) (of_Z (wB - 1 - x)))).
   clear x.
   intros x IHn Hpos.
@@ -81,7 +102,7 @@ Definition fold_int {T: Type} (f : int -> T -> T) (e: int) (acc: T) :=
   fold_int' T f 0 e acc (Acc_intro_generator 22 acc_int 0).
 
 Lemma suc_sub:
-  forall n m, 
+  forall n m,
   m < n ->
   (S (n - S m) = n - m)%nat.
 Proof.
@@ -113,14 +134,14 @@ Proof.
     { destruct n'. easy. simpl. easy. }
     assert (H': x = of_Z (Z.of_nat (S n'))).
     { apply to_Z_inj. rewrite Hxn. rewrite of_Z_spec, Z.mod_small. easy.
-      rewrite <- Hxn. apply to_Z_bounded. }   
+      rewrite <- Hxn. apply to_Z_bounded. }
     rewrite H, H'. easy.
 Qed.
 
 Lemma fold_int_spec :
   forall T (f : int -> T -> T) e acc,
   fold_int f e acc =
-  nat_rect (fun _ => T) acc 
+  nat_rect (fun _ => T) acc
            (fun n acc => f (of_Z (Z.of_nat n)) acc)
            (Z.to_nat (to_Z e)).
 Proof.

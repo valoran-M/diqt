@@ -42,6 +42,45 @@ Proof.
     now inversion H0.
 Qed.
 
+Inductive intint :=
+  | I : int -> int -> intint.
+
+Definition eqb_ii (n m: intint) :=
+  let (n1, n2) := n in
+  let (m1, m2) := m in
+  (n1 =? m1) && (n2 =? m2).
+
+Theorem eq_spec_ii:
+  forall n m : intint, reflect (n = m) (eqb_ii n m).
+Proof.
+  intros [n1 n2] [m1 m2]. case (eqb_ii _ _) eqn:H.
+  + apply ReflectT. unfold eqb_ii in H.
+    rewrite andb_true_iff in H. destruct H as [H1 H2].
+    apply eqb_spec in H1, H2. now rewrite H1, H2.
+  + apply ReflectF. unfold eqb_ii in H.
+    rewrite andb_false_iff in H. 
+    destruct H as [H | H];
+    intros H0; rewrite eqb_false_spec in H; apply H; 
+    now inversion H0.
+Qed.
+
+Module INTINT <: Hash_type.
+  Definition A := intint.
+  Definition eq n m := eqb_ii n m.
+  Definition eq_spec := eq_spec_ii.
+  Definition hashi (i: A): int :=
+    let (n1, n2) := i in
+    n1 + n2 * 345.
+    (* hash n1 (hash n2 0). *)
+  Definition hashp (i: A): positive :=
+    let hi := hashi i in
+    match to_Z hi with
+    | Z.pos p => p
+    | _ => xH
+    end.
+End INTINT.
+
+
 Module NATNAT <: Hash_type.
   Definition A := natnat.
   Definition eq n m := eqb_nn n m.
@@ -57,7 +96,30 @@ Module NATNAT <: Hash_type.
     end.
 End NATNAT.
 
-Module Test (H: HashTable NATNAT).
+Module Test (H: HashTable INTINT).
+
+  Fixpoint pascal_memo' (n m: nat) (ni mi : int) (h: H.t int) : (int * H.t int) :=
+    match H.find h (I ni mi) with
+    | Some v => (v, h)
+    | None =>
+      match n, m with
+      | 0, 0 => (1, h)
+      | 0, _ => (0, h)
+      | _, 0 => (1, h) 
+      | S n', S m' => 
+          let (v1, h1) := pascal_memo' n' m' (ni-1) (mi -1) h in
+          let (v2, h2) := pascal_memo' n' m (ni-1) mi h1 in
+        let r := v1 + v2 in
+        (r, H.add h2 (I ni mi) r) 
+      end
+    end.
+
+  Definition pascal_memo n m :=
+    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (of_Z n) (of_Z m) (H.create 16)).
+
+End Test.
+
+Module TestNN (H: HashTable NATNAT).
 
   Fixpoint pascal_memo' (n m: nat) (h: H.t int) : (int * H.t int) :=
     match H.find h (N n m) with
@@ -68,29 +130,37 @@ Module Test (H: HashTable NATNAT).
       | 0, _ => (0, h)
       | _, 0 => (1, h) 
       | S n', S m' => 
-        let (v1, h1) := pascal_memo' n' m' h in
-        let (v2, h2) := pascal_memo' n' m h1 in
+          let (v1, h1) := pascal_memo' n' m' h in
+          let (v2, h2) := pascal_memo' n' m h1 in
         let r := v1 + v2 in
         (r, H.add h2 (N n m) r) 
       end
     end.
 
   Definition pascal_memo n m :=
-    fst (pascal_memo' n m (H.create 16)).
+    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (H.create 16)).
+End TestNN.
 
-End Test.
+Module HTreeNN := HashTableTree NATNAT.
+Module TestTreeNN := TestNN HTreeNN.
 
-Module HTree := HashTableTree NATNAT.
+Module HBucketNN := HashTableBucket NATNAT.
+Module TestBucketNN := TestNN HBucketNN.
+
+Module HTree := HashTableTree INTINT.
 Module TestTree := Test HTree.
 
-Module HBucket := HashTableBucket NATNAT.
+Module HBucket := HashTableBucket INTINT.
 Module TestBucket := Test HBucket.
 
 (* Compute pascal 30 15. *)
+Time Compute TestTreeNN.pascal_memo 400 200.
+Time Compute TestBucketNN.pascal_memo 400 200.
 Time Compute TestTree.pascal_memo 400 200.
 Time Compute TestBucket.pascal_memo 400 200.
 
-(* +-------------+--------+--------+--------+--------+
+(*
+   +-------------+--------+--------+--------+--------+
    | pascal 2n n | n=50   | n=100  | n=150  | n=200  | 
    +-------------+--------+--------+--------+--------+
    | Radix Tree  | 0.093s | 0.331s | 0.919s | 1.917s |
