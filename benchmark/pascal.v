@@ -113,9 +113,36 @@ Module Test (H: HashTable INTINT).
         (r, H.add h2 (I ni mi) r) 
       end
     end.
-
+  
   Definition pascal_memo n m :=
     fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (of_Z n) (of_Z m) (H.create 16)).
+  
+  Theorem pascal_memo_correct:
+    forall n m,
+    pascal_memo (Z.of_nat n) (Z.of_nat m) = pascal n m.
+  Proof.
+    induction n; unfold pascal_memo.
+    + intros [|m'].
+      - simpl. case H.find. admit. reflexivity.
+      - simpl. case H.find. admit.
+        rewrite SuccNat2Pos.id_succ. reflexivity.
+    + unfold pascal_memo in IHn. intros [|m'].
+      - simpl. rewrite SuccNat2Pos.id_succ. simpl.
+        case H.find. admit. reflexivity.
+      - simpl. rewrite SuccNat2Pos.id_succ. simpl.
+        case H.find. admit.
+        rewrite SuccNat2Pos.id_succ.
+        destruct pascal_memo' eqn:Hv1.
+        destruct (pascal_memo' n (S m') (of_pos (Pos.of_succ_nat n) - 1)
+                 (of_pos (Pos.of_succ_nat m')) t) eqn:Hv2.
+        change i with (fst (i, t)). change i0 with (fst (i0, t0)).
+        rewrite <- Hv1, <- Hv2. rewrite <- (Nat2Z.id n), <- (Nat2Z.id m') at 1. 
+        rewrite Pos.of_nat_succ. Search Pos.of_nat.
+        Search (Pos.of_nat (S _)).
+        rewrite IHn. Nat2Pos.inj_succ. simpl.
+        rewrite IHn.
+
+      
 
 End Test.
 

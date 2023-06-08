@@ -164,10 +164,9 @@ Section Hashtable.
     let hash := hash key in
     let i := key_index h hash in
     let bucket := get tab i in
-    let (bucket_change, bucket) := bucket_remove bucket hash key in
-    if bucket_change
-    then hash_tab (size h)     tab.[i <- C hash key v :: bucket]
-    else hash_tab (size h + 1) tab.[i <- C hash key v :: bucket].
+    let remove_result := bucket_remove bucket hash key in
+    let new_size := if fst remove_result then (size h) else (size h) + 1 in
+    hash_tab new_size tab.[i <- C hash key v :: snd remove_result].
 
   Fixpoint find_rec (l: bucket) (h: int) (k: A): option B :=
     match l with
@@ -668,15 +667,27 @@ Section Hashtable.
     k1 <> k2 ->
     find (replace ht k1 v) k2 = find ht k2.
   Proof.
-    intros ht k1 k2 v Hk. unfold replace, find, get_bucket, length.
-    destruct (bucket_remove (hashtab (resize ht)).[key_index (resize ht) (hash k1)]
-       (hash k1) k1).
-    assert (H: PArray.length (hashtab (resize ht)) =? 0 = false).
-    { assert (Hr: (length (resize ht) =? 0) = false)
-      by apply length_resize_non_neg. now unfold length in Hr. }
-    case b. Search PArray.length.
-    + simpl. rewrite length_set, H. unfold key_index, length.
-      simpl. rewrite length_set.
+    intros ht k1 k2 v Hk. rewrite 2!find_spec. f_equal.
+    assert (H: find_all (resize ht) k2 = find_all ht k2) by apply find_all_resize.
+    assert (Hl: PArray.length (hashtab (resize ht)) =? 0 = false).
+    { assert (Hl: (length (resize ht) =? 0) = false)
+      by apply length_resize_non_neg. easy. }
+    unfold replace, find_all, get_bucket, key_index, length. simpl.
+    rewrite length_set, Hl.
+    case (hash k1 mod PArray.length (hashtab (resize ht)) =?
+          hash k2 mod PArray.length (hashtab (resize ht))) eqn:Heq.
+    + rewrite eqb_spec in Heq. rewrite Heq. rewrite get_set_same. simpl.
+      assert (Hb: (if hash k2 =? hash k1 then eq k2 k1 else false) = false).
+      { case (hash k2 =? hash k1). apply neq_sym, eq_false in Hk. all: easy. }
+      rewrite Hb, bucket_remove_other. unfold find_all, get_bucket in H.
+      rewrite length_resize_non_neg in H. apply H. now apply neq_sym.
+      rewrite ltb_spec, mod_spec. apply Z_mod_lt. rewrite eqbP_false_to_Z in Hl.
+      generalize (to_Z_bounded (PArray.length (hashtab (resize ht)))).
+      change (to_Z 0) with 0%Z in Hl. lia.
+    + rewrite get_set_other. unfold find_all, get_bucket in H.
+      rewrite length_resize_non_neg in H. apply H. rewrite eqb_false_spec in Heq.
+      apply Heq.
+  Qed.
 
 End Hashtable.
 
