@@ -37,14 +37,14 @@ Il faut des invariants :
 
 - solution :
 
-1.  Hypothèse dans les preuves table bien formés et chaques opérations
+   1.  Hypothèse dans les preuves table bien formés et chaques opérations
     nous renvoi une table bien formée (peut rendre les preuves plus difficle
     pour l'utilisateur)
-2.  revoir les fonctions en rajoutant le minium pour retrouver les invariants
+   2.  revoir les fonctions en rajoutant le minium pour retrouver les invariants
     (rajout de tests inutiles si la table de hachage est créé avec l'interface
     données)
 
-    Resize : 
+#### Resize : 
 
 ```
 let resize ht =
@@ -56,8 +56,6 @@ let resize ht =
     done
 ```
 
-Resize:
-
 > la fonction de resize à été très difficle car elle demandait un itérateur sur
 > les tableau persistant.
 
@@ -65,6 +63,8 @@ Pour faire ça j'ai utilisé un élément de la théorie de Coq qui s'appel Acc.
 C'est un type qui contient un constructeur _Acc_into_ qui définie une relation
 d'accésibilité qui est utilisé ici pour savoir si nous avons dépassé un certaint
 élement.
+
+#### Fonction de bases
 
 rajout des fonctions de bases comme remove et replace, preuves très simple
 comparé au resize.
@@ -129,8 +129,6 @@ encore une fois en faver des tables de hachages.
 ### Lambda
 
 Échec Total
-
-
 
 ## Utilisation des théormes
 
