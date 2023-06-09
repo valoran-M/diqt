@@ -129,3 +129,20 @@ encore une fois en faver des tables de hachages.
 ### Lambda
 
 Échec Total
+
+
+
+## Utilisation des théormes
+
+Il a fallut tester si les théorèmes donnés était bien suffisant et facile à
+utiliser. Pour cela j'ai essayer de faire une preuve sur la fonction du triangle
+de pascal mémoïsée.
+
+### Pascal
+
+Pour tester les théormèmes j'ai fait la preuve:
+
+>    forall n m,
+>    pascal_memor (Z.of_nat n) (Z.of_nat m) = pascal n m
+
+

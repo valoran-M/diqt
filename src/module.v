@@ -2,6 +2,9 @@ Require Import Bool.
 Require Import ZArith.
 Require dict hashtable.
 Require Import Coq.Numbers.Cyclic.Int63.Uint63.
+Require Import List.
+
+Import ListNotations.
 
 Open Scope uint63_scope.
 
@@ -15,9 +18,25 @@ End Hash_type.
 
 Module Type HashTable (T : Hash_type).
   Parameter t: Set -> Type.
-  Parameter create : forall {b: Set}, int -> t b.
+  Parameter create : forall b: Set, int -> t b.
   Parameter add : forall {b:Set}, t b -> T.A -> b -> t b.
   Parameter find : forall {b:Set}, t b -> T.A -> option b.
+  Parameter find_all: forall {B: Set}, t B -> T.A -> list B.
+
+  Parameter find_spec:
+    forall B (ht: t B) key,
+    find ht key = List.hd_error (find_all ht key).
+
+  Parameter hempty:
+    forall B k s, find (create B s) k = None.
+
+  Parameter add_same:
+    forall B k (h: t B) v,
+    find_all (add h k v) k = v :: (find_all h k).
+
+  Parameter add_diff:
+    forall B k k' (h: t B) v,
+    k' <> k -> find_all (add h k v) k' = find_all h k'.
 End HashTable.
 
 Module HashTableTree (T: Hash_type) <: HashTable T.
@@ -30,6 +49,27 @@ Module HashTableTree (T: Hash_type) <: HashTable T.
 
   Definition find {B: Set} (h: t B) (key: T.A): option B :=
     dict.find T.A T.eq B T.hashp key h.
+
+  Definition find_all {B: Set} (h: t B) (key: T.A) : list B := [].
+
+  Theorem find_spec:
+    forall B (ht: t B) key,
+    find ht key = List.hd_error (find_all ht key).
+  Admitted.
+
+  Theorem hempty:
+    forall B k s, find (create B s) k = None.
+  Admitted.
+
+  Theorem add_same:
+    forall B k (h: t B) v,
+    find_all (add h k v) k = v :: (find_all h k).
+  Admitted.
+
+  Theorem add_diff:
+    forall B k k' (h: t B) v,
+    k' <> k -> find_all (add h k v) k' = find_all h k'.
+  Admitted.
 End HashTableTree.
 
 Module HashTableBucket (T: Hash_type) <: HashTable T.
@@ -42,5 +82,32 @@ Module HashTableBucket (T: Hash_type) <: HashTable T.
 
   Definition find {B: Set} (h: t B) (key: T.A): option B :=
     hashtable.find T.eq T.hashi h key.
+
+  Definition find_all {B: Set} (h: t B) (key: T.A) :=
+    hashtable.find_all T.eq T.hashi h key.
+
+  Theorem find_spec:
+    forall B (ht: t B) key,
+    find ht key = List.hd_error (find_all ht key).
+  Proof. intros. apply hashtable.find_spec. Qed.
+
+  Theorem hempty:
+    forall B k s, find (create B s) k = None. 
+  Proof. intros. apply hashtable.hempty. Qed.
+
+  Theorem add_same:
+    forall B k (h: t B) v,
+    find_all (add h k v) k = v :: (find_all h k).
+  Proof. intros. apply hashtable.find_add_same, T.eq_spec. Qed.
+
+  Theorem add_diff:
+    forall B k k' (h: t B) v,
+    k' <> k -> find_all (add h k v) k' = find_all h k'.
+  Proof.
+    intros B k k' h v H.
+    apply hashtable.find_add_diff.
+    apply T.eq_spec. apply H.
+  Qed.
+
 End HashTableBucket.
 

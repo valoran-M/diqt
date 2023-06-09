@@ -115,34 +115,8 @@ Module Test (H: HashTable INTINT).
     end.
   
   Definition pascal_memo n m :=
-    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (of_Z n) (of_Z m) (H.create 16)).
+    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (of_Z n) (of_Z m) (H.create int 16)).
   
-  Theorem pascal_memo_correct:
-    forall n m,
-    pascal_memo (Z.of_nat n) (Z.of_nat m) = pascal n m.
-  Proof.
-    induction n; unfold pascal_memo.
-    + intros [|m'].
-      - simpl. case H.find. admit. reflexivity.
-      - simpl. case H.find. admit.
-        rewrite SuccNat2Pos.id_succ. reflexivity.
-    + unfold pascal_memo in IHn. intros [|m'].
-      - simpl. rewrite SuccNat2Pos.id_succ. simpl.
-        case H.find. admit. reflexivity.
-      - simpl. rewrite SuccNat2Pos.id_succ. simpl.
-        case H.find. admit.
-        rewrite SuccNat2Pos.id_succ.
-        destruct pascal_memo' eqn:Hv1.
-        destruct (pascal_memo' n (S m') (of_pos (Pos.of_succ_nat n) - 1)
-                 (of_pos (Pos.of_succ_nat m')) t) eqn:Hv2.
-        change i with (fst (i, t)). change i0 with (fst (i0, t0)).
-        rewrite <- Hv1, <- Hv2. rewrite <- (Nat2Z.id n), <- (Nat2Z.id m') at 1. 
-        rewrite Pos.of_nat_succ. Search Pos.of_nat.
-        Search (Pos.of_nat (S _)).
-  Admitted.
-
-      
-
 End Test.
 
 Module TestNN (H: HashTable NATNAT).
@@ -164,7 +138,53 @@ Module TestNN (H: HashTable NATNAT).
     end.
 
   Definition pascal_memo n m :=
-    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (H.create 16)).
+    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (H.create int 16)).
+
+  Theorem pascal_memo_correct:
+    forall n m,
+    pascal_memo (Z.of_nat n) (Z.of_nat m) = pascal n m.
+  Proof.
+    intros n m. unfold pascal_memo.
+    rewrite 2!Nat2Z.id.
+    set (ok ht := forall n' m' i, H.find ht (N n' m') = Some i -> i = pascal n' m').
+    cut (forall ht, ok ht -> ok (snd (pascal_memo' n m ht)) 
+          /\ fst (pascal_memo' n m ht) = pascal n m). intros H.
+    apply H. unfold ok. intros n' m' i.
+    rewrite H.hempty. easy.
+    revert m. induction n.
+    + intros [| m] ht Hht; simpl.
+      - case H.find eqn:Hf. simpl. split. easy.
+        unfold ok in Hht. rewrite (Hht 0%nat 0%nat) at 1. reflexivity.
+        easy. simpl. easy.
+      - case H.find eqn:Hf. simpl. split. easy.
+        unfold ok in Hht. rewrite (Hht 0%nat (S m)) at 1. reflexivity.
+        easy. simpl. easy.
+    + intros [| m] ht Oht.
+      - simpl. case H.find eqn:Heq.
+        simpl.
+        split. easy. unfold ok in Oht. apply (Oht (S n) 0%nat). easy.
+        easy.
+      - simpl. case H.find eqn:Heq. simpl. split. easy.
+        unfold ok in Oht. apply (Oht (S n) (S m)). easy.
+        generalize (IHn m ht). destruct (pascal_memo' n m ht).
+        generalize (IHn (S m) t). destruct (pascal_memo' n (S m) t).
+        simpl. intros Hm Hsm.
+        specialize (Hsm Oht) as [Ot ->]. specialize (Hm Ot) as [Ot0 ->].
+        split. 2: reflexivity.
+        intros n' m' i'.
+        case (NATNAT.eq (N n' m') (N (S n) (S m))) eqn:Hnn; rewrite H.find_spec.
+        * unfold NATNAT.eq in Hnn.
+          case (NATNAT.eq_spec (N n' m') (N (S n) (S m))) as [Hn|] in Hnn.
+          2:discriminate. rewrite Hn, H.add_same.
+          simpl. injection Hn. intros -> ->. simpl. intros H. injection H.
+          intros <-. reflexivity.
+        * rewrite H.add_diff. intros Hf. rewrite (Ot0 n' m') at 1.
+          reflexivity. rewrite H.find_spec. easy.
+          unfold NATNAT.eq in Hnn.
+          case (NATNAT.eq_spec (N n' m') (N (S n) (S m))) as [|Hn] in Hnn.
+          discriminate. easy.
+  Qed.
+
 End TestNN.
 
 Module HTreeNN := HashTableTree NATNAT.
