@@ -140,7 +140,28 @@ de pascal mémoïsée.
 
 Pour tester les théormèmes j'ai fait la preuve:
 
->    forall n m,
->    pascal_memor (Z.of_nat n) (Z.of_nat m) = pascal n m
+```
+    forall n m, pascal_memo (Z.of_nat n) (Z.of_nat m) = pascal n m
+```
 
+Pour faire cette preuve Guillaume m'a expliquer la différences entre un
+invariant et un invariant inductif.
+
+> Un invariant est une propriété gardée du début à la fin d'une boucle.
+> Parfoit prouver un invariant peut être impossible donc pour ça on va créé un
+> invariant inductif qui rend la preuve de l'invariant trivial et qui peut ce
+> prouver par récurence.
+
+Pour cette preuve on a prouver l'invriant inductif suivant:
+
+```
+   forall ht, ok ht -> ok (snd (pascal_memo' n m ht)) 
+           /\ fst (pascal_memo' n m ht) = pascal n m
+```
+avec `ok := forall n' m' i, H.find ht (N n' m') = Some i -> i = pascal n' m'`
+
+pascal_memo appel `pascal_memo' n m ht` avec ht une table de hachage.
+
+Grâce à cet inveriant inductif on peut facilement prouver le théorème de base.
+et pour prouver l'inveriant inductif on va faire une récurence sur n.
 
