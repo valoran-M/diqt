@@ -1,8 +1,11 @@
-Require Import hashtable dict module.
+Require Import hashtable dict module utils.
 Require Import ZArith Bool.
 Require Import Coq.Numbers.Cyclic.Int63.Uint63.
+Require Import Coq.FSets.FMapAVL.
 
 Open Scope uint63_scope.
+
+(* normal pascal function *)
 
 Fixpoint pascal (n m: nat) : int :=
   match n, m with
@@ -11,6 +14,49 @@ Fixpoint pascal (n m: nat) : int :=
   | _, 0 => 1
   | S n', S m' => pascal n' m' + pascal n' m
   end.
+
+(* int couple *)
+
+Inductive intint :=
+  | I : int -> int -> intint.
+
+Definition eqb_ii (n m: intint) :=
+  let (n1, n2) := n in
+  let (m1, m2) := m in
+  (n1 =? m1) && (n2 =? m2).
+
+Theorem eq_spec_ii:
+  forall n m : intint, reflect (n = m) (eqb_ii n m).
+Proof.
+  intros [n1 n2] [m1 m2]. case (eqb_ii _ _) eqn:H.
+  + apply ReflectT. unfold eqb_ii in H.
+    rewrite andb_true_iff in H. destruct H as [H1 H2].
+    apply eqb_spec in H1, H2. now rewrite H1, H2.
+  + apply ReflectF. unfold eqb_ii in H.
+    rewrite andb_false_iff in H.
+    destruct H as [H | H];
+    intros H0; rewrite eqb_false_spec in H; apply H;
+    now inversion H0.
+Qed.
+
+(* free hash funtion *)
+
+Module INTINT <: Hash_type.
+  Definition A := intint.
+  Definition eq n m := eqb_ii n m.
+  Definition eq_spec := eq_spec_ii.
+  Definition hashi (i: A): int :=
+    let (n1, n2) := i in
+    n1 + n2 * 345.
+  Definition hashp (i: A): positive :=
+    let hi := hashi i in
+    match to_Z hi with
+    | Z.pos p => p
+    | _ => xH
+    end.
+End INTINT.
+
+(* nat couple *)
 
 Inductive natnat :=
   | N : nat -> nat -> natnat.
@@ -38,48 +84,11 @@ Proof.
     apply Nat.eqb_eq in H1, H2. now rewrite H1, H2.
   + apply ReflectF. unfold eqb_nn in H.
     rewrite andb_false_iff in H. destruct H as [H | H];
-    intros H0; rewrite Nat.eqb_neq in H; apply H; 
-    now inversion H0.
+        intros H0; rewrite Nat.eqb_neq in H; apply H;
+        now inversion H0.
 Qed.
 
-Inductive intint :=
-  | I : int -> int -> intint.
-
-Definition eqb_ii (n m: intint) :=
-  let (n1, n2) := n in
-  let (m1, m2) := m in
-  (n1 =? m1) && (n2 =? m2).
-
-Theorem eq_spec_ii:
-  forall n m : intint, reflect (n = m) (eqb_ii n m).
-Proof.
-  intros [n1 n2] [m1 m2]. case (eqb_ii _ _) eqn:H.
-  + apply ReflectT. unfold eqb_ii in H.
-    rewrite andb_true_iff in H. destruct H as [H1 H2].
-    apply eqb_spec in H1, H2. now rewrite H1, H2.
-  + apply ReflectF. unfold eqb_ii in H.
-    rewrite andb_false_iff in H. 
-    destruct H as [H | H];
-    intros H0; rewrite eqb_false_spec in H; apply H; 
-    now inversion H0.
-Qed.
-
-Module INTINT <: Hash_type.
-  Definition A := intint.
-  Definition eq n m := eqb_ii n m.
-  Definition eq_spec := eq_spec_ii.
-  Definition hashi (i: A): int :=
-    let (n1, n2) := i in
-    n1 + n2 * 345.
-    (* hash n1 (hash n2 0). *)
-  Definition hashp (i: A): positive :=
-    let hi := hashi i in
-    match to_Z hi with
-    | Z.pos p => p
-    | _ => xH
-    end.
-End INTINT.
-
+(* expensive hash funtion *)
 
 Module NATNAT <: Hash_type.
   Definition A := natnat.
@@ -96,7 +105,9 @@ Module NATNAT <: Hash_type.
     end.
 End NATNAT.
 
-Module Test (H: HashTable INTINT).
+(* Pascal memo with tuple of int *)
+
+Module ITest (H: HashTable INTINT).
 
   Fixpoint pascal_memo' (n m: nat) (ni mi : int) (h: H.t int) : (int * H.t int) :=
     match H.find h (I ni mi) with
@@ -105,21 +116,23 @@ Module Test (H: HashTable INTINT).
       match n, m with
       | 0, 0 => (1, h)
       | 0, _ => (0, h)
-      | _, 0 => (1, h) 
-      | S n', S m' => 
+      | _, 0 => (1, h)
+      | S n', S m' =>
           let (v1, h1) := pascal_memo' n' m' (ni-1) (mi -1) h in
           let (v2, h2) := pascal_memo' n' m (ni-1) mi h1 in
         let r := v1 + v2 in
-        (r, H.add h2 (I ni mi) r) 
+        (r, H.add h2 (I ni mi) r)
       end
     end.
-  
+
   Definition pascal_memo n m :=
     fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (of_Z n) (of_Z m) (H.create int 16)).
-  
-End Test.
 
-Module TestNN (H: HashTable NATNAT).
+End ITest.
+
+(* Pascal memo with tuple of nat *)
+
+Module NTest (H: HashTable NATNAT).
 
   Fixpoint pascal_memo' (n m: nat) (h: H.t int) : (int * H.t int) :=
     match H.find h (N n m) with
@@ -128,12 +141,12 @@ Module TestNN (H: HashTable NATNAT).
       match n, m with
       | 0, 0 => (1, h)
       | 0, _ => (0, h)
-      | _, 0 => (1, h) 
-      | S n', S m' => 
+      | _, 0 => (1, h)
+      | S n', S m' =>
           let (v1, h1) := pascal_memo' n' m' h in
           let (v2, h2) := pascal_memo' n' m h1 in
         let r := v1 + v2 in
-        (r, H.add h2 (N n m) r) 
+        (r, H.add h2 (N n m) r)
       end
     end.
 
@@ -147,7 +160,7 @@ Module TestNN (H: HashTable NATNAT).
     intros n m. unfold pascal_memo.
     rewrite 2!Nat2Z.id.
     set (ok ht := forall n' m' i, H.find ht (N n' m') = Some i -> i = pascal n' m').
-    cut (forall ht, ok ht -> ok (snd (pascal_memo' n m ht)) 
+    cut (forall ht, ok ht -> ok (snd (pascal_memo' n m ht))
           /\ fst (pascal_memo' n m ht) = pascal n m). intros H.
     apply H. unfold ok. intros n' m' i.
     rewrite H.hempty. easy.
@@ -185,29 +198,145 @@ Module TestNN (H: HashTable NATNAT).
           discriminate. easy.
   Qed.
 
-End TestNN.
+End NTest.
+
+(* FINTINT Key type for FMap AVL in stdlib *)
+
+Module FINTINT.
+  Definition t := intint.
+  Definition eq (n m: t) := eqb_ii n m = true.
+
+  Lemma eq_refl:
+    forall i, eq i i.
+  Proof.
+    unfold eq, eqb_ii. intros [n1 n2].
+    rewrite 2!eqb_refl. reflexivity.
+  Qed.
+
+  Lemma eq_sym:
+    forall n m : t, eq n m -> eq m n.
+  Proof.
+    intros [n1 n2] [m1 m2].
+    unfold eq, eqb_ii. intros H.
+    apply andb_true_intro. rewrite andb_true_iff in H.
+    rewrite 2!eqb_spec in H. destruct H as [<- <-].
+    rewrite 2!eqb_refl. easy.
+  Qed.
+
+  Lemma eq_trans:
+    forall x y z : t, eq x y -> eq y z -> eq x z.
+  Proof.
+    intros [x1 x2] [y1 y2] [z1 z2] Hxy Hyz.
+    unfold eq, eqb_ii in *.
+    rewrite andb_true_iff, 2!eqb_spec in *.
+    now destruct Hxy as [<- <-].
+  Qed.
+
+  Definition eq_spec := eq_spec_ii.
+
+  Definition lt (n m: t) :=
+    let (n1, n2) := n in
+    let (m1, m2) := m in
+    (n1 <? m1) || ((n1 =? m1) && (n2 <? m2)) = true.
+
+  Lemma lt_trans:
+    forall x y z : t, lt x y -> lt y z -> lt x z.
+  Proof.
+    intros [x1 x2] [y1 y2] [z1 z2] Hxy Hyz.
+    unfold lt in *.
+    rewrite orb_true_iff, andb_true_iff,
+            2!ltb_spec, eqb_spec in *.
+    destruct Hxy as [Hxy1 | [Heq1 Hxy2]].
+    + destruct Hyz as [Hyz1 | [Heq2 Hyz2]].
+      - left. now apply Z.lt_trans with (m:=to_Z y1).
+      - rewrite <- Heq2. now left.
+    + destruct Hyz as [Hyz1 | [Heq2 Hyz2]].
+      - rewrite Heq1. now left.
+      - rewrite Heq1, Heq2. right. split. reflexivity.
+        now apply Z.lt_trans with (m:=to_Z y2).
+  Qed.
+
+  Lemma lt_not_eq:
+    forall x y : t, lt x y -> ~ eq x y.
+  Proof.
+    intros [x1 x2] [y1 y2] Hlt Heq.
+    unfold eq, eqb_ii in Heq. rewrite andb_true_iff, 2!eqb_spec in Heq.
+    destruct Heq as [<- <-].
+    unfold lt in Hlt. rewrite orb_true_iff, andb_true_iff in Hlt.
+    destruct Hlt as [Hlt | [_ Hlt]];
+    rewrite ltb_spec in Hlt.
+    + contradiction (Z.lt_irrefl (to_Z x1)).
+    + contradiction (Z.lt_irrefl (to_Z x2)).
+  Qed.
+
+  Definition compare (x y: t):
+    OrderedType.Compare lt eq x y.
+  Proof.
+    case_eq (eqb_ii x y); intro Heq.
+    - apply OrderedType.EQ. now unfold eq.
+    - destruct x as [x1 x2]; destruct y as [y1 y2].
+      case_eq ((x1 <? y1) || ((x1 =? y1) && (x2 <? y2))); intros Hlt.
+      + apply OrderedType.LT. now unfold lt.
+      + apply OrderedType.GT. unfold lt, eqb_ii in *.
+        rewrite orb_false_iff in Hlt. destruct Hlt as [Hlt1 Hlt2].
+        rewrite andb_false_iff in *. rewrite orb_true_iff, andb_true_iff.
+        case (y1 =? x1) eqn:H1.
+        * right. split. reflexivity.
+          rewrite eqb_spec in H1. rewrite H1, eqb_refl in *.
+          destruct Hlt2; destruct Heq; try discriminate.
+          rewrite ltb_spec. case (ltbP x2 y2) in H. discriminate.
+          apply Znot_lt_ge in n. apply Z.ge_le in n.
+          rewrite eqbP_false_to_Z in H0. apply Z.le_neq.
+          split. easy. now apply neq_sym.
+        * rewrite eqbP_false_to_Z in H1.
+          case (ltbP x1 y1) in Hlt1. discriminate.
+          apply Znot_lt_ge in n. apply Z.ge_le in n.
+          left. rewrite ltb_spec. now apply Z.le_neq.
+  Defined.
+
+  Definition eq_dec:
+    forall x y : t, {eq x y} + {~ eq x y}.
+  Proof.
+    intros [x1 x2] [y1 y2]. unfold eq, eqb_ii.
+    case (x1 =? y1) eqn:H1. case (x2 =? y2) eqn:H2.
+    1:   now left.
+    all: now right.
+  Qed.
+
+End FINTINT.
+
+Module Import M := FMapAVL.Make(FINTINT).
+
+Let E := M.empty int.
+Let T1 := M.add (I 0 0) 2 E.
+
+Compute M.find (I 0 0) T1.
+Compute M.find (I 0 2) T1.
+
+(* tests *)
 
 Module HTreeNN := HashTableTree NATNAT.
-Module TestTreeNN := TestNN HTreeNN.
+Module NTestTree := NTest HTreeNN.
 
 Module HBucketNN := HashTableBucket NATNAT.
-Module TestBucketNN := TestNN HBucketNN.
+Module NTestBucket := NTest HBucketNN.
 
 Module HTree := HashTableTree INTINT.
-Module TestTree := Test HTree.
+Module ITestTree := ITest HTree.
 
 Module HBucket := HashTableBucket INTINT.
-Module TestBucket := Test HBucket.
+Module ITestBucket := ITest HBucket.
 
 (* Compute pascal 30 15. *)
 (* Time Compute TestTreeNN.pascal_memo 400 200. *)
 (* Time Compute TestBucketNN.pascal_memo 400 200. *)
-Time Compute TestTree.pascal_memo 400 200.
-Time Compute TestBucket.pascal_memo 400 200.
+Time Compute ITestTree.pascal_memo 400 200.
+Time Compute ITestBucket.pascal_memo 400 200.
 
-(*
+(* results:
+
    +-------------+--------+--------+--------+--------+
-   | pascal 2n n | n=50   | n=100  | n=150  | n=200  | 
+   | pascal 2n n | n=50   | n=100  | n=150  | n=200  |
    +-------------+--------+--------+--------+--------+
    | Radix Tree  | 0.093s | 0.331s | 0.919s | 1.917s |
    +-------------+--------+--------+--------+--------+

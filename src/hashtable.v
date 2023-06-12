@@ -640,9 +640,9 @@ Section Hashtable.
 
   Theorem replace_same:
     forall ht key v,
-    find (replace ht key v) key = Some v.
+    find_all (replace ht key v) key = v :: find_all ht key.
   Proof.
-    intros. unfold replace, find, get_bucket, length.
+    intros. unfold replace, find_all, get_bucket, length.
     destruct (bucket_remove (hashtab (resize ht)).[key_index (resize ht) (hash key)]
        (hash key) key).
     assert (H: PArray.length (hashtab (resize ht)) =? 0 = false).
@@ -651,7 +651,7 @@ Section Hashtable.
     case b.
     + simpl. rewrite length_set.
       rewrite H. unfold key_index, length. simpl. rewrite length_set.
-      rewrite get_set_same. simpl. now rewrite eqb_refl, eq_refl.
+      rewrite get_set_same. simpl. rewrite eqb_refl, eq_refl.
       rewrite ltb_spec, mod_spec. apply Z_mod_lt.
       rewrite eqbP_false_to_Z in H. change (to_Z 0) with 0%Z in H.
       generalize (to_Z_bounded (PArray.length (hashtab (resize ht)))). lia.
@@ -665,9 +665,9 @@ Section Hashtable.
   Theorem replace_other:
     forall ht k1 k2 v,
     k1 <> k2 ->
-    find (replace ht k1 v) k2 = find ht k2.
+    find_all (replace ht k1 v) k2 = find_all ht k2.
   Proof.
-    intros ht k1 k2 v Hk. rewrite 2!find_spec. f_equal.
+    intros ht k1 k2 v Hk.
     assert (H: find_all (resize ht) k2 = find_all ht k2) by apply find_all_resize.
     assert (Hl: PArray.length (hashtab (resize ht)) =? 0 = false).
     { assert (Hl: (length (resize ht) =? 0) = false)
