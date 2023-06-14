@@ -1,2 +1,2 @@
--R src stage
-src
+-R src stage -R benchmark stage
+src benchmark

@@ -216,6 +216,12 @@ Section Hashtable.
     let bucket := get_bucket h hash in
     find_rec bucket hash key.
 
+  Definition mem (h: t) (key: A) : bool :=
+    match find h key with
+    | Some _ => true
+    | None   => false
+    end.
+
   Definition find_all (h: t) (key: A) : list B :=
     let hash := hash key in
     find_all_rec (get_bucket h hash) hash key [].
@@ -640,26 +646,24 @@ Section Hashtable.
 
   Theorem replace_same:
     forall ht key v,
-    find_all (replace ht key v) key = v :: find_all ht key.
+    find_all (replace ht key v) key = v :: (List.tl (find_all ht key)).
   Proof.
-    intros. unfold replace, find_all, get_bucket, length.
-    destruct (bucket_remove (hashtab (resize ht)).[key_index (resize ht) (hash key)]
-       (hash key) key).
-    assert (H: PArray.length (hashtab (resize ht)) =? 0 = false).
-    { assert (Hr: (length (resize ht) =? 0) = false)
-      by apply length_resize_non_neg. now unfold length in Hr. }
-    case b.
-    + simpl. rewrite length_set.
-      rewrite H. unfold key_index, length. simpl. rewrite length_set.
-      rewrite get_set_same. simpl. rewrite eqb_refl, eq_refl.
-      rewrite ltb_spec, mod_spec. apply Z_mod_lt.
-      rewrite eqbP_false_to_Z in H. change (to_Z 0) with 0%Z in H.
-      generalize (to_Z_bounded (PArray.length (hashtab (resize ht)))). lia.
-    + simpl. unfold key_index, length. simpl. rewrite length_set, H.
-      rewrite get_set_same. simpl. rewrite eq_refl, eqb_refl. reflexivity.
-      rewrite ltb_spec, mod_spec. apply Z_mod_lt.
-      generalize (to_Z_bounded (PArray.length (hashtab (resize ht)))).
-      rewrite eqbP_false_to_Z in H. change (to_Z 0) with 0%Z in H. lia.
+    intros ht key v. rewrite <- (find_all_resize ht).
+    unfold find_all. rewrite 2!find_all_rec_correct.
+    unfold get_bucket. rewrite 2!eqb_false_complete. simpl.
+    assert (Heq: key_index (resize ht) (hash key) = 
+                 key_index (replace ht key v) (hash key)).
+    { unfold key_index. unfold length, replace. simpl. now rewrite length_set. }
+    rewrite Heq, get_set_same. simpl. rewrite eq_refl, eqb_refl. f_equal.
+    generalize (bucket_remove_same
+        (hashtab (resize ht)).[key_index (replace ht key v) (hash key)] key).
+    simpl. rewrite 2!find_all_rec_correct. simpl. now intros [_ ->].
+    rewrite <- Heq. unfold key_index, length. rewrite ltb_spec, mod_spec.
+    apply Z_mod_lt. generalize (to_Z_bounded (PArray.length (hashtab (resize ht)))).
+    generalize (length_resize_non_neg ht). rewrite eqbP_false_to_Z.
+    change (to_Z 0) with 0%Z. unfold length. lia.
+    2:unfold length, resize, replace; simpl; rewrite length_set.
+    all:rewrite <- eqb_false_spec; apply length_resize_non_neg.
   Qed.
 
   Theorem replace_other:

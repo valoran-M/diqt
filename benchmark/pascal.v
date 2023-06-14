@@ -84,8 +84,8 @@ Proof.
     apply Nat.eqb_eq in H1, H2. now rewrite H1, H2.
   + apply ReflectF. unfold eqb_nn in H.
     rewrite andb_false_iff in H. destruct H as [H | H];
-        intros H0; rewrite Nat.eqb_neq in H; apply H;
-        now inversion H0.
+    intros H0; rewrite Nat.eqb_neq in H; apply H;
+    now inversion H0.
 Qed.
 
 (* expensive hash funtion *)
@@ -234,6 +234,7 @@ Module FINTINT.
 
   Definition eq_spec := eq_spec_ii.
 
+  (* Lexicographic order *)
   Definition lt (n m: t) :=
     let (n1, n2) := n in
     let (m1, m2) := m in
@@ -269,29 +270,64 @@ Module FINTINT.
     + contradiction (Z.lt_irrefl (to_Z x2)).
   Qed.
 
+  Definition compare_def (x y: t) :=
+    let (x1, x2) := x in
+    let (y1, y2) := y in
+    let cmp := compare x1 y1 in
+    match cmp with
+    | Eq => compare x2 y2
+    | _ => cmp
+    end.
+
+  Lemma compare_eq:
+    forall x y, compare_def x y = Eq -> eq x y.
+  Proof.
+    intros [x1 x2] [y1 y2] H.
+    unfold compare_def in H.
+    unfold eq, eqb_ii.
+    apply andb_true_iff. rewrite 2!eqbP_true_to_Z.
+    case (x1 ?= y1) eqn:H1; try discriminate.
+    rewrite compare_spec in *.
+    split; now apply Z.compare_eq.
+  Qed.
+
+  Lemma compare_lt:
+    forall x y, compare_def x y = Lt -> lt x y.
+  Proof.
+    intros [x1 x2] [y1 y2] H.
+    unfold compare_def in H. unfold lt.
+    apply orb_true_iff. rewrite andb_true_iff, eqbP_true_to_Z.
+    case (x1 ?= y1) eqn:H1; try discriminate.
+    + rewrite compare_spec in *. right. split.
+      now apply Z.compare_eq in H1.
+      apply ltb_spec. now rewrite <- Z.compare_lt_iff.
+    + left. rewrite compare_spec in H1. rewrite ltb_spec.
+      now rewrite <- Z.compare_lt_iff.
+  Qed.
+
+  Lemma compare_gt:
+    forall x y, compare_def x y = Gt -> lt y x.
+  Proof.
+    intros [x1 x2] [y1 y2] H.
+    unfold compare_def in H. unfold lt.
+    apply orb_true_iff. rewrite andb_true_iff, eqbP_true_to_Z.
+    case (x1 ?= y1) eqn:H1; try discriminate.
+    + right. rewrite compare_spec in *. split.
+      now apply Z.compare_eq in H1.
+      rewrite Zcompare_Gt_Lt_antisym in H.
+      apply ltb_spec. now rewrite <- Z.compare_lt_iff.
+    + left. rewrite compare_spec in *.
+      rewrite Zcompare_Gt_Lt_antisym in H1.
+      apply ltb_spec. now rewrite <- Z.compare_lt_iff.
+  Qed.
+
   Definition compare (x y: t):
     OrderedType.Compare lt eq x y.
   Proof.
-    case_eq (eqb_ii x y); intro Heq.
-    - apply OrderedType.EQ. now unfold eq.
-    - destruct x as [x1 x2]; destruct y as [y1 y2].
-      case_eq ((x1 <? y1) || ((x1 =? y1) && (x2 <? y2))); intros Hlt.
-      + apply OrderedType.LT. now unfold lt.
-      + apply OrderedType.GT. unfold lt, eqb_ii in *.
-        rewrite orb_false_iff in Hlt. destruct Hlt as [Hlt1 Hlt2].
-        rewrite andb_false_iff in *. rewrite orb_true_iff, andb_true_iff.
-        case (y1 =? x1) eqn:H1.
-        * right. split. reflexivity.
-          rewrite eqb_spec in H1. rewrite H1, eqb_refl in *.
-          destruct Hlt2; destruct Heq; try discriminate.
-          rewrite ltb_spec. case (ltbP x2 y2) in H. discriminate.
-          apply Znot_lt_ge in n. apply Z.ge_le in n.
-          rewrite eqbP_false_to_Z in H0. apply Z.le_neq.
-          split. easy. now apply neq_sym.
-        * rewrite eqbP_false_to_Z in H1.
-          case (ltbP x1 y1) in Hlt1. discriminate.
-          apply Znot_lt_ge in n. apply Z.ge_le in n.
-          left. rewrite ltb_spec. now apply Z.le_neq.
+    case (compare_def x y) eqn:Hc.
+    + apply OrderedType.EQ. now apply compare_eq.
+    + apply OrderedType.LT. now apply compare_lt.
+    + apply OrderedType.GT. now apply compare_gt.
   Defined.
 
   Definition eq_dec:
@@ -302,16 +338,33 @@ Module FINTINT.
     1:   now left.
     all: now right.
   Qed.
-
 End FINTINT.
 
-Module Import M := FMapAVL.Make(FINTINT).
+(* Pascal memo with tuple of int and Fmap *)
 
-Let E := M.empty int.
-Let T1 := M.add (I 0 0) 2 E.
+Module FTest.
+  Module Import M := FMapAVL.Make(FINTINT).
 
-Compute M.find (I 0 0) T1.
-Compute M.find (I 0 2) T1.
+  Fixpoint pascal_memo' (n m: nat) (ni mi : int) (h: M.t int) : (int * M.t int) :=
+    match M.find (I ni mi) h with
+    | Some v => (v, h)
+    | None =>
+      match n, m with
+      | 0, 0 => (1, h)
+      | 0, _ => (0, h)
+      | _, 0 => (1, h)
+      | S n', S m' =>
+          let (v1, h1) := pascal_memo' n' m' (ni-1) (mi -1) h in
+          let (v2, h2) := pascal_memo' n' m (ni-1) mi h1 in
+          let r := v1 + v2 in
+          (r, M.add (I ni mi) r h2)
+      end
+    end.
+
+  Definition pascal_memo n m :=
+    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (of_Z n) (of_Z m) (M.empty int)).
+
+End FTest.
 
 (* tests *)
 
@@ -327,20 +380,45 @@ Module ITestTree := ITest HTree.
 Module HBucket := HashTableBucket INTINT.
 Module ITestBucket := ITest HBucket.
 
-(* Compute pascal 30 15. *)
-(* Time Compute TestTreeNN.pascal_memo 400 200. *)
-(* Time Compute TestBucketNN.pascal_memo 400 200. *)
-Time Compute ITestTree.pascal_memo 400 200.
-Time Compute ITestBucket.pascal_memo 400 200.
+Time Compute ITestTree.pascal_memo 800 400.
+Time Compute ITestBucket.pascal_memo 800 400.
+
 
 (* results:
+
+  N{Radix Tree, Bucket} = pascal memo with natnat (expensive hash)
+  I{Radix Tree, Bucket} = pascal memo with intint (free hash)
 
    +-------------+--------+--------+--------+--------+
    | pascal 2n n | n=50   | n=100  | n=150  | n=200  |
    +-------------+--------+--------+--------+--------+
-   | Radix Tree  | 0.093s | 0.331s | 0.919s | 1.917s |
+   | NRadix Tree | 0.093s | 0.331s | 0.919s | 1.917s |
    +-------------+--------+--------+--------+--------+
-   | Bucket      | 0.032s | 0.167s | 0.462s | 1.003s | ~ / 2
+   | NBucket     | 0.032s | 0.167s | 0.462s | 1.003s | ~ / 2
+   +-------------+--------+--------+--------+--------+
+   | FMap Avl    | 0.084s | 0.35s  | 0.723s | 1.413  |
+   +-------------+--------+--------+--------+--------+
+   | IRadix Tree | 0.068s | 0.206s | 0.423s | 0.788s |
+   +-------------+--------+--------+--------+--------+
+   | IBucket     | 0.009s | 0.026s | 0.069s | 0.091s | ~ / 10
    +-------------+--------+--------+--------+--------+
 *)
+
+(*@ test_pascal
+    for i : 0 -> 100
+      {s
+        Require Import pascal.
+        Definition ii := (2 * i)%Z.
+      s}
+      (* FMap *)
+      { Time Compute FTest.pascal_memo ii i. }
+      (* NRadix *)
+      { Time Compute NTestTree.pascal_memo ii i. }
+      (* NBucket *)
+      { Time Compute NTestBucket.pascal_memo ii i. }
+      (* IRadix *)
+      { Time Compute IRadix.pascal_memo ii i. }
+      (* IBucket *)
+      { Time Compute IBucket.pascal_memo ii i. }
+ @*)
 

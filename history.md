@@ -69,6 +69,33 @@ d'accésibilité qui est utilisé ici pour savoir si nous avons dépassé un cer
 rajout des fonctions de bases comme remove et replace, preuves très simple
 comparé au resize.
 
+## FMap AVL
+
+J'ai aussi utilisé les FMap de Coq pour comparer l'utilisation (que doit on
+faire pour utiliser cette librairie) et aussi pour avoir un apperçut des
+différences de performance. Avoir des tests avec des structure de type AVL
+(arbre binaire de recherche)
+
+### Utilisaiton
+
+Déjà pour commencer les FMap sont beaucoup plus difficile à mettre en place.
+Il faut faire un module avec:
+
+* une relation équivalence ( = ) avec les théorèmes:
+    - eq i i
+    - eq n m -> eq m n
+    - eq x y -> eq y z -> eq x z
+    - reflect (n = m) (eq n m)
+* une relation ordre ( < ) avec les théorèmes:
+    - x < y -> y < z -> x < z
+    - x < y -> x != y
+* une fonction compare qui renvoi Eq, Lt ou Gt.
+    Avec le théorème OrderedType.Compare lt eq x y.
+* Théorème {eq x y} + {~ eq x y}
+
+Après avoir utiliser FMapAVL.Make on a un module avec les fonctions de base des
+Maps comme find, add, empty, ...
+
 ## Tests
 
 Il est enfi temps de faire queqlue tests pour comparer les performance des
@@ -111,12 +138,12 @@ pascal(n, m) = | 1                                          si n = 0
     +-----------+
 ```
 
-| pascal 2n n    | Radix Tree Nat| Bucket Nat| Radix Tree Int | Bucket Int |
-|:------------   | :--------:    | :----:    | :------------: | :--------: |
-| n=50           | 0.093s        | 0.32s     | 0.58s          | 0.02s      |
-| n=100          | 0.331s        | 0.167s    | 0.203s         | 0.026s     |
-| n=150          | 0.919s        | 0.462s    | 0.423s         | 0.092s     |
-| n=200          | 1.917s        | 1.003s    | 0.794s         | 0.114s     |
+| pascal 2n n    | Radix Tree Nat| Bucket Nat| Radix Tree Int | Bucket Int | FMap AVL |
+|:------------   | :--------:    | :----:    | :------------: | :--------: | :------: |
+| n=50           | 0.093s        | 0.32s     | 0.58s          | 0.02s      | 0.084s   |
+| n=100          | 0.331s        | 0.167s    | 0.203s         | 0.026s     | 0.35s    |
+| n=150          | 0.919s        | 0.462s    | 0.423s         | 0.092s     | 0.723s   |
+| n=200          | 1.917s        | 1.003s    | 0.794s         | 0.114s     | 1.413s   |
 
 Il y des type de fonction de hachage, celle prend des Nat (hn) et celle qui prend 
 des Int (hi). La fonction hn est bien plus coûteuse que la fonction hi.
