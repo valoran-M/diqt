@@ -96,6 +96,9 @@ Il faut faire un module avec:
 Après avoir utiliser FMapAVL.Make on a un module avec les fonctions de base des
 Maps comme find, add, empty, ...
 
+Cette structure de données est aussi plus lente que les hashtables mais la
+performance n'est pas influencé par une potentiel mauvaise fonction de hachage.
+
 ## Tests
 
 Il est enfi temps de faire queqlue tests pour comparer les performance des
@@ -115,7 +118,8 @@ fibo(1) = 1
 fibo(n + 1) = fibo(n) + fibo (n + 1)
 ```
 
-Malheuresement cette fonction est linéaire lorsque les calcules sont mémoïsés. Le temps n'était pas très représentatif de la performance de la table de
+Malheuresement cette fonction est linéaire lorsque les calcules sont mémoïsés. 
+Le temps n'était pas très représentatif de la performance de la table de
 hachage.
 
 ### Pascal
