@@ -93,7 +93,7 @@ faire pour utiliser cette librairie) et aussi pour avoir un aperçut des
 différences de performance. Avoir des tests avec des structure de type AVL
 (arbre binaire de recherche)
 
-### Utilisaiton
+### Utilisation
 
 Déjà pour commencer les FMap sont beaucoup plus difficile à mettre en place.
 Il faut faire un module avec:
