@@ -159,14 +159,18 @@ Section Hashtable.
     let hash := hash key in
     find_all_rec (get_bucket h hash) hash key [].
 
-  Fixpoint elements_bucket l b :=
+  Fixpoint elements_bucket l b i s :=
     match b with
     | []            => l
-    | C h k v :: b' => elements_bucket ((k, v) :: l) b'
+    | C h k v :: b' => 
+        if h mod s =? i
+        then elements_bucket ((k, v) :: l) b' i s
+        else elements_bucket l b' i s
     end.
 
   Definition elements h :=
-    fold_int (fun i l => elements_bucket l (hashtab h).[i]) (length h) [].
+    let s := length h in
+    fold_int (fun i l => elements_bucket l (hashtab h).[i] i s) s [].
 
   Fixpoint fold_bucket {Acc: Type} b f (acc: Acc) :=
     match b with
@@ -731,78 +735,121 @@ Section Hashtable.
 
   (* elements *)
 
-  Fixpoint elements_bucket' l b :=
-    match b with
-    | []    => l
-    | C _ k v :: b' => (k, v) :: elements_bucket l b'
-    end.
-
-  Definition lelts_to_lfind (l : list (A * B)) key : list B :=
-    List.map snd (List.filter (fun v => eq (fst v) key) l).
-
-  Lemma lelts_to_lfind_in:
-    forall l key v,
-    List.In v (lelts_to_lfind l key) ->
-    List.In (key, v) l.
-  Proof.
-    induction l; intros key v; simpl. easy.
-    unfold lelts_to_lfind. simpl.
-    case (eq (fst a)) eqn:Heq.
-    + simpl. intros [Hs | H].
-      - left. rewrite surjective_pairing at 1.
-        rewrite Hs. case (eq_spec (fst a) key) in Heq; try discriminate.
-        now rewrite e.
-      - right. apply IHl. now unfold lelts_to_lfind.
-    + intros H. right. apply IHl. now unfold lelts_to_lfind.
-  Qed.
-
-  Lemma lelts_to_lfind_in_elements_bucket:
-    forall b l key v,
-    List.In v (lelts_to_lfind l key) ->
-    List.In (key, v) (elements_bucket l b).
-  Proof.
-    induction b; intros l key v; simpl. exact (lelts_to_lfind_in _ _ _).
-    destruct a as [_ k v0]. simpl. right. now apply IHb.
-  Qed.
-
-  Lemma find_all_rec_in_empty:
-    forall b l key v,
-    List.In v (find_all_rec b (hash key) key []) ->
-    List.In v (find_all_rec b (hash key) key l).
-  Proof.
-    intros *. rewrite 2!find_all_rec_correct. simpl.
-    intros H. apply List.in_or_app. now right.
-  Qed.
-
-  Lemma case_find_all_rec:
-    forall b l key v,
-    List.In v (find_all_rec b (hash key) key l) ->
-    List.In v l \/ List.In v (find_all_rec b (hash key) key []).
-  Proof.
-    intros *. rewrite 2!find_all_rec_correct. simpl.
-    intros H. apply List.in_app_or in H as [].
-    left. now apply List.in_rev. now right.
-  Qed.
-
-  Lemma elements_bucket_correct:
-    forall b l_elt key v,
-    List.In v (find_all_rec b (hash key) key (lelts_to_lfind l_elt key)) ->
-    List.In (key, v) (elements_bucket l_elt b).
-  Proof.
-    induction b.
-    + simpl. unfold rev'. intros *. rewrite <- rev_alt, <- in_rev.
-      exact (lelts_to_lfind_in l_elt key v).
-    + intros *. simpl. destruct a.
-      case (hash key =? i) eqn:Hh.
-      - case (eq_spec key a) as [<- | Hd].
-        * simpl. intros H. apply case_find_all_rec in H.
-          destruct H as [[->|]|]. now left.
-          right. now apply lelts_to_lfind_in_elements_bucket.
-          right. apply IHb. now apply find_all_rec_in_empty.
-        * simpl. right. now apply IHb.
-      - simpl. intros H. right. apply IHb, H.
-  Qed.
-
+  (* Fixpoint elements_bucket'' b := *)
+  (*   match b with *)
+  (*   | []            => [] *)
+  (*   | C _ k v :: b' => (k, v) :: elements_bucket'' b' *)
+  (*   end. *)
+  (**)
+  (* Definition elements_bucket' l b := *)
+  (*   List.rev_append (elements_bucket'' b) l. *)
+  (**)
+  (* Lemma elements_bucket_rec: *)
+  (*   forall b l, *)
+  (*   elements_bucket l b = elements_bucket' l b. *)
+  (* Proof. *)
+  (*   induction b. easy. *)
+  (*   unfold elements_bucket' in *. simpl. intros l. *)
+  (*   destruct a as [_ k v]. now rewrite IHb. *)
+  (* Qed. *)
+  (**)
+  (* Definition elements_to_findall (l : list (A * B)) key : list B := *)
+  (*   List.map snd (List.filter (fun v => eq (fst v) key) l). *)
+  (**)
+  (* Lemma elements_to_findall_in: *)
+  (*   forall l key v, *)
+  (*   List.In v (elements_to_findall l key) -> *)
+  (*   List.In (key, v) l. *)
+  (* Proof. *)
+  (*   induction l; intros key v; simpl. easy. *)
+  (*   unfold elements_to_findall. simpl. *)
+  (*   case (eq (fst a)) eqn:Heq. *)
+  (*   + simpl. intros [Hs | H]. *)
+  (*     - left. rewrite surjective_pairing at 1. *)
+  (*       rewrite Hs. case (eq_spec (fst a) key) in Heq; try discriminate. *)
+  (*       now rewrite e. *)
+  (*     - right. apply IHl. now unfold elements_to_findall. *)
+  (*   + intros H. right. apply IHl. now unfold elements_to_findall. *)
+  (* Qed. *)
+  (**)
+  (* Lemma elements_to_findall_in_elements_bucket: *)
+  (*   forall b l key v, *)
+  (*   List.In v (elements_to_findall l key) -> *)
+  (*   List.In (key, v) (elements_bucket l b). *)
+  (* Proof. *)
+  (*   induction b; intros l key v; simpl. exact (elements_to_findall_in _ _ _). *)
+  (*   destruct a as [_ k v0]. intros H. apply IHb. *)
+  (*   unfold elements_to_findall in *. simpl. *)
+  (*   case eq. simpl. now right. easy. *)
+  (* Qed. *)
+  (**)
+  (* Lemma find_all_rec_in_empty: *)
+  (*   forall b l key v, *)
+  (*   List.In v (find_all_rec b (hash key) key []) -> *)
+  (*   List.In v (find_all_rec b (hash key) key l). *)
+  (* Proof. *)
+  (*   intros *. rewrite 2!find_all_rec_correct. simpl. *)
+  (*   intros H. apply List.in_or_app. now right. *)
+  (* Qed. *)
+  (**)
+  (* Lemma case_find_all_rec: *)
+  (*   forall b l key v, *)
+  (*   List.In v (find_all_rec b (hash key) key l) -> *)
+  (*   List.In v l \/ List.In v (find_all_rec b (hash key) key []). *)
+  (* Proof. *)
+  (*   intros *. rewrite 2!find_all_rec_correct. simpl. *)
+  (*   intros H. apply List.in_app_or in H as []. *)
+  (*   left. now apply List.in_rev. now right. *)
+  (* Qed. *)
+  (**)
+  (* Lemma elements_bucket_correct: *)
+  (*   forall b l_elt key v, *)
+  (*   List.In (key, v) l_elt \/ List.In (key, v) (elements_bucket [] b) -> *)
+  (*   List.In (key, v) (elements_bucket l_elt b). *)
+  (* Proof. *)
+  (*   induction b. *)
+  (*   + simpl. intros l k v [H|]; easy. *)
+  (*   + simpl. destruct a as [_ k' v']. *)
+  (*     intros l k v [Hl|He]. *)
+  (*     - apply IHb. left. simpl. now right. *)
+  (*     - apply IHb. rewrite elements_bucket_rec in *. *)
+  (*       unfold elements_bucket' in *. rewrite rev_append_rev in *. *)
+  (*       apply in_app_or in He as [|]. *)
+  (*       * right. now rewrite app_nil_r. *)
+  (*       * simpl in H. destruct H as [|]; try contradiction. *)
+  (*         left. simpl. now left. *)
+  (* Qed. *)
+  (**)
+  (* Lemma length_nat: *)
+  (*   forall h l, *)
+  (*   length h = l <-> Z.to_nat (to_Z (length h)) = Z.to_nat (to_Z l). *)
+  (* Proof. *)
+  (*   intros h l. split. *)
+  (*   + intros H. f_equal. now f_equal. *)
+  (*   + intros H. apply Z2Nat.inj in H. *)
+  (*     now apply to_Z_inj in H. *)
+  (*     generalize (to_Z_bounded (length h)). *)
+  (*     2: generalize (to_Z_bounded l). all:lia. *)
+  (* Qed. *)
+  (**)
+  (* (* Inductive count {T: Type} (v: T) : list T -> nat -> Prop := *) *)
+  (* (*   | Count_nil : count nil 0%nat *) *)
+  (**)
+  (* Theorem elements_spec: *)
+  (*   forall h k v, *)
+  (*   List.count_occ v (find_all h k) = List.count_occ (k, v) (elements h). *)
+  (* Proof. *)
+  (*   intros h k v. unfold elements, find_all, get_bucket. *)
+  (*   case (length h =? 0) eqn:Hl. easy. *)
+  (*   rewrite eqb_false_spec, length_nat in Hl. simpl in Hl. *)
+  (*   rewrite fold_int_spec. *)
+  (*   induction (Z.to_nat (to_Z (length h))). *)
+  (*   + contradiction Hl. easy. *)
+  (*   + simpl. case ((n =? 0)%nat) eqn:Hn. *)
+  (*     - rewrite Nat.eqb_eq in Hn. rewrite Hn. simpl. *)
+  (*        *)
+  (*       admit. *)
+  (*     -  *)
   (* fold *)
 
   Lemma fold_correct:
