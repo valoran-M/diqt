@@ -189,13 +189,14 @@ Voici le pseudo code :
 ```
 h <- []
 for i = 1 to +inf
-    if (i in h) then h <- h \ {i}
+    if (i in h) then (h <- h \ {i}; continue)
     j <- i
     while true do
         j <- syracuse j
         if j < i then break
-        if (j in h) then return 
-        h <- h ++ {j}
+        match h.[j] with
+        | Some i' => if i = i' then return else break
+        | None    => h <- h.[j <- i]
     done
 ```
 

@@ -380,8 +380,8 @@ Module ITestTree := ITest HTree.
 Module HBucket := HashTableBucket INTINT.
 Module ITestBucket := ITest HBucket.
 
-Time Compute ITestTree.pascal_memo 800 400.
-Time Compute ITestBucket.pascal_memo 800 400.
+(* Time Compute ITestTree.pascal_memo 500 250. *)
+(* Time Compute ITestBucket.pascal_memo 500 250. *)
 
 
 (* results:
@@ -405,20 +405,20 @@ Time Compute ITestBucket.pascal_memo 800 400.
 *)
 
 (*@ test_pascal
-    for i : 0 -> 100
+    for n : 20 -> 300
       {s
         Require Import pascal.
-        Definition ii := (2 * i)%Z.
+        Definition ii := (2 * n)%Z.
       s}
       (* FMap *)
-      { Time Compute FTest.pascal_memo ii i. }
+      { Time Compute FTest.pascal_memo ii n. }
       (* NRadix *)
-      { Time Compute NTestTree.pascal_memo ii i. }
+      { Time Compute NTestTree.pascal_memo ii n. }
       (* NBucket *)
-      { Time Compute NTestBucket.pascal_memo ii i. }
+      { Time Compute NTestBucket.pascal_memo ii n. }
       (* IRadix *)
-      { Time Compute IRadix.pascal_memo ii i. }
+      { Time Compute ITestTree.pascal_memo ii n. }
       (* IBucket *)
-      { Time Compute IBucket.pascal_memo ii i. }
+      { Time Compute ITestBucket.pascal_memo ii n. }
  @*)
 

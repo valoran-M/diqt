@@ -49,6 +49,12 @@ time-of-build-both.log
 time-of-build-pretty.log
 
 # End of https://www.toptal.com/developers/gitignore/api/coq
+tmp*
+*.png
+*.csv
+*.ods
+*.ods#
+bench
 Makefile*
 benchmark/*.exe
 benchmark/*.ml
