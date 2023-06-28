@@ -14,20 +14,21 @@ Section Dict.
 
   Variable hash: A -> positive.
 
-  Inductive bucket_e : Set :=
-    | C : positive -> A -> B  -> bucket_e.
-  Definition t := tree (list (bucket_e)).
+  Inductive bucket : Set :=
+    | E : bucket
+    | C : positive -> A -> B -> bucket -> bucket.
+  Definition t := tree bucket.
 
   Definition empty : t := empty.
 
   Fixpoint find_iter h_k k l: option B :=
     match l with
-    | nil     => None
-    | C h k' v :: tl => 
+    | E     => None
+    | C h k' v tl =>
         if h_k =? h
-        then ( if eq k k' 
+        then ( if eq k k'
                then Some v
-               else find_iter h_k k tl) 
+               else find_iter h_k k tl)
         else find_iter h_k k tl
     end.
 
@@ -37,13 +38,52 @@ Section Dict.
     | Some l => find_iter (hash k) k l
     end.
 
-  Definition add (k: A) (e: B) (d: t): t := 
+  Fixpoint find_all_rec (l: bucket) (h: positive) (k: A) (acc: list B): list B :=
+    match l with
+    | E => List.rev' acc
+    | C h' k' v l' => 
+        if if h =? h' then eq k k' else false
+        then find_all_rec l' h k (v :: acc)
+        else find_all_rec l' h k acc
+    end.
+
+  Definition find_all (k: A) (d: t): list B :=
     let h_k := hash k in
     match get h_k d with
-    | None   => set h_k [ C h_k k e ] d
-    | Some l => set h_k ( C h_k k e :: l ) d
+    | None   => []
+    | Some l => find_all_rec l h_k k []
     end.
-  
+
+  Definition add (k: A) (e: B) (d: t): t :=
+    let h_k := hash k in
+    match get h_k d with
+    | None   => set h_k (C h_k k e E) d
+    | Some l => set h_k (C h_k k e l) d
+    end.
+
+  Fixpoint bucket_remove (b: bucket) (hash: positive) (key: A) :=
+    match b with
+    | E => E
+    | C hash' key' v b =>
+        if if hash =? hash' then eq key key' else false
+        then b
+        else C hash' key' v (bucket_remove b hash key)
+    end.
+
+  Definition remove (k: A) (d: t): t :=
+    let h_k := hash k in
+    match get h_k d with
+    | None   => d
+    | Some l => set h_k (bucket_remove l h_k k) d
+    end.
+
+  Definition replace (k: A) (e: B) (d: t): t :=
+    let h_k := hash k in
+    match get h_k d with
+    | None   => set h_k (C h_k k e E) d
+    | Some l => set h_k (C h_k k e (bucket_remove l h_k k)) d
+    end.
+
   Lemma eq_true:
     forall (k1 k2 : A), k1 = k2 -> eq k1 k2 = true.
   Proof.
@@ -68,17 +108,17 @@ Section Dict.
   Theorem dempty:
     forall (k: A), find k empty = None.
   Proof.
-    intro i. unfold find. 
+    intro i. unfold find.
     assert (get (hash i) empty = None).
     apply gempty. now rewrite H.
   Qed.
 
-  Theorem dss: 
+  Theorem dss:
     forall (k: A) (x: B) (d: t), find k (add k x d) = Some x.
   Proof.
     intros k x d. unfold find, add.
     case (get (hash k) d).
-    - intro l. rewrite gss. simpl. 
+    - intro l. rewrite gss. simpl.
       case (eq_spec k k). intros Hk.
       assert (H: hash k =? hash k = true) by now rewrite Pos.eqb_eq.
       now rewrite H.
@@ -91,9 +131,9 @@ Section Dict.
 
   Lemma hash_equal:
     forall (k1 k2: A) (x: B) (d: t) l,
-      hash k1 = hash k2 -> 
-      get (hash k1) d = Some l -> 
-      get (hash k1) (add k2 x d) = Some (C (hash k2) k2 x :: l).
+      hash k1 = hash k2 ->
+      get (hash k1) d = Some l ->
+      get (hash k1) (add k2 x d) = Some (C (hash k2) k2 x l).
   Proof.
     intros k1 k2 x d l H Hget.
     unfold add. rewrite <- H. rewrite Hget.
@@ -102,8 +142,8 @@ Section Dict.
 
   Lemma hash_diff:
     forall (k1 k2: A) (x: B) (d: t) l,
-      hash k1 <> hash k2 -> 
-      get (hash k1) d = l -> 
+      hash k1 <> hash k2 ->
+      get (hash k1) d = l ->
       get (hash k1) (add k2 x d) = l.
   Proof.
     intros k1 k2 x d l H Hget. rewrite <- Hget.
@@ -118,9 +158,9 @@ Section Dict.
   Proof.
     intros k1 k2 x d H. unfold find.
     case (Pos.eq_dec (hash k1) (hash k2)).
-    - intros Heq. 
+    - intros Heq.
       destruct (get (hash k1) d) eqn:Hget.
-      rewrite hash_equal with (1 := Heq) (2 := Hget). 
+      rewrite hash_equal with (1 := Heq) (2 := Hget).
       simpl. rewrite <- Pos.eqb_eq in Heq. rewrite Heq.
       assert (H0: eq k1 k2 = false) by now rewrite eq_false.
       now rewrite H0.

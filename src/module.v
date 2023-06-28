@@ -18,10 +18,13 @@ End Hash_type.
 
 Module Type HashTable (T : Hash_type).
   Parameter t: Set -> Type.
-  Parameter create : forall b: Set, int -> t b.
-  Parameter add : forall {b:Set}, t b -> T.A -> b -> t b.
-  Parameter find : forall {b:Set}, t b -> T.A -> option b.
+  Parameter create : forall B: Set, int -> t B.
+  Parameter add : forall {B:Set}, t B -> T.A -> B -> t B.
+  Parameter find : forall {B:Set}, t B -> T.A -> option B.
   Parameter find_all: forall {B: Set}, t B -> T.A -> list B.
+  Parameter mem: forall {B: Set}, t B -> T.A -> bool.
+  Parameter remove: forall {B: Set}, t B -> T.A -> t B.
+  Parameter replace: forall {B: Set}, t B -> T.A -> B -> t B.
 
   Parameter find_spec:
     forall B (ht: t B) key,
@@ -50,7 +53,20 @@ Module HashTableTree (T: Hash_type) <: HashTable T.
   Definition find {B: Set} (h: t B) (key: T.A): option B :=
     dict.find T.A T.eq B T.hashp key h.
 
-  Definition find_all {B: Set} (h: t B) (key: T.A) : list B := [].
+  Definition find_all {B: Set} (h: t B) (key: T.A) : list B :=
+    dict.find_all T.A T.eq B T.hashp key h.
+
+  Definition remove {B: Set} (h: t B) (key: T.A) :=
+    dict.remove T.A T.eq B T.hashp key h.
+
+  Definition replace {B: Set} (h: t B) (key: T.A) (v: B) :=
+    dict.replace T.A T.eq B T.hashp key v h.
+
+  Definition mem {B: Set} (h: t B) (key: T.A) : bool :=
+    match find h key with
+    | Some _ => true
+    | None   => false
+    end.
 
   Theorem find_spec:
     forall B (ht: t B) key,
@@ -85,6 +101,15 @@ Module HashTableBucket (T: Hash_type) <: HashTable T.
 
   Definition find_all {B: Set} (h: t B) (key: T.A) :=
     hashtable.find_all T.eq T.hashi h key.
+
+  Definition mem {B: Set} (h: t B) (key: T.A) :=
+    hashtable.mem  T.eq T.hashi h key.
+
+  Definition remove {B: Set} (h: t B) (key: T.A) :=
+    hashtable.remove T.eq T.hashi h key.
+
+  Definition replace {B: Set} (h: t B) (key: T.A) (v: B) :=
+    hashtable.replace T.eq T.hashi h key v.
 
   Theorem find_spec:
     forall B (ht: t B) key,

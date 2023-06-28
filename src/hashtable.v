@@ -21,10 +21,10 @@ Section Hashtable.
     | Cons : int -> A -> B -> bucket -> bucket.
 
   Definition table := PArray.array bucket.
-  
-  Record t : Set := hash_tab { 
+
+  Record t : Set := hash_tab {
     size : int;
-    hashtab : table; 
+    hashtab : table;
   }.
 
   Definition length t : int :=
@@ -33,13 +33,13 @@ Section Hashtable.
   Fixpoint power_2_above' (n: nat) (x p: int) {struct n} : int :=
     match n with
     | O    => p
-    | S n' => 
-        if (p <? x) then 
+    | S n' =>
+        if (p <? x) then
           power_2_above' n' x (p * 2)
-        else 
+        else
           p
     end.
-  
+
   (* 2**22 - 1 = max_length *)
   Definition power_2_above := power_2_above' 22%nat.
 
@@ -50,7 +50,8 @@ Section Hashtable.
 
   Definition key_index (s: int) (k: int) : int :=
         (* fst (mulc k 9141102117794624) mod s. *)
-    ((k * 9141102117794624) >> 41) mod s.
+    (* ((k * 9141102117794624) >> 41) mod s. *)
+    k mod s.
 
   Definition get_bucket (h: t) (k: int) : bucket :=
     if length h =? 0 then Empty
@@ -79,15 +80,15 @@ Section Hashtable.
     let last_size := length ht in
     let new_size := last_size * 2 in
     let a := make new_size Empty in
-    let new_tab := 
+    let new_tab :=
       fold_int (fun i a =>
-        rehash_bucket a (hashtab ht) (PArray.length a) (length ht) i) 
-      i a 
+        rehash_bucket a (hashtab ht) (PArray.length a) (length ht) i)
+      i a
     in
     hash_tab (size ht) new_tab.
 
   Definition resize (ht: t): t :=
-    if length ht =? 0 then 
+    if length ht =? 0 then
       hash_tab 0 (make 16 Empty)
     else if resize_heurisitic ht then
       copy_tab ht (length ht)
@@ -99,9 +100,9 @@ Section Hashtable.
     | Cons hash' key' v b =>
         if if hash =? hash' then eq key key' else false
         then (true, b)
-        else 
+        else
           let new_bucket := bucket_remove b hash key in
-          (fst new_bucket, Cons hash' key' v (snd new_bucket)) 
+          (fst new_bucket, Cons hash' key' v (snd new_bucket))
     end.
 
   Definition remove (h: t) (key: A) : t :=
@@ -133,9 +134,9 @@ Section Hashtable.
   Fixpoint find_rec (l: bucket) (h: int) (k: A): option B :=
     match l with
     | Empty => None
-    | Cons h' k' v l' => 
+    | Cons h' k' v l' =>
         if if h =? h' then eq k k' else false
-        then Some v 
+        then Some v
         else find_rec l' h k
     end.
 
@@ -147,7 +148,7 @@ Section Hashtable.
   Fixpoint find_all_rec (l: bucket) (h: int) (k: A) (acc: list B): list B :=
     match l with
     | Empty => List.rev' acc
-    | Cons h' k' v l' => 
+    | Cons h' k' v l' =>
         if if h =? h' then eq k k' else false
         then find_all_rec l' h k (v :: acc)
         else find_all_rec l' h k acc
@@ -166,7 +167,7 @@ Section Hashtable.
   Fixpoint elements_bucket l b i s :=
     match b with
     | Empty         => l
-    | Cons h k v b' => 
+    | Cons h k v b' =>
         if key_index s h =? i
         then elements_bucket ((k, v) :: l) b' i s
         else elements_bucket l b' i s
@@ -224,7 +225,7 @@ Section Hashtable.
   Fixpoint find_all_rec' (l: bucket) (h: int) (k: A) : list B :=
     match l with
     | Empty => []
-    | Cons h' k' v l' => 
+    | Cons h' k' v l' =>
         if if h =? h' then eq k k' else false
         then v :: find_all_rec' l' h k
         else find_all_rec' l' h k
@@ -250,7 +251,7 @@ Section Hashtable.
 
   Lemma rehash_bucket_length:
     forall (nt lt: table) i,
-    PArray.length (rehash_bucket nt lt (PArray.length nt) (PArray.length lt) i) 
+    PArray.length (rehash_bucket nt lt (PArray.length nt) (PArray.length lt) i)
     = PArray.length nt.
   Proof.
     intros nt lt i.
@@ -353,7 +354,7 @@ Section Hashtable.
             now apply fold_right_length.
           **rewrite get_set_other. apply IHb. now rewrite eqb_false_spec in Hheq.
       + rewrite IHb. rewrite H in Heq.
-        case (eqbP (key_index (PArray.length (hashtab lt)) (hash j)) 
+        case (eqbP (key_index (PArray.length (hashtab lt)) (hash j))
                 (key_index (PArray.length (hashtab lt)) i0)) as [|Heq']in Heq.
         discriminate.
         unfold key_index in Heq'. rewrite 2!mod_spec in Heq'.
@@ -368,7 +369,7 @@ Section Hashtable.
     length lt =? 0 = false ->
     PArray.length nt =? 0 = false ->
     i <> key_index (length lt) (hash k) ->
-    (to_Z (length lt) <= to_Z (PArray.length nt))%Z -> 
+    (to_Z (length lt) <= to_Z (PArray.length nt))%Z ->
     find_all (hash_tab s (rehash_bucket nt (hashtab lt)
                             (PArray.length nt) (length lt) i)) k =
     find_all (hash_tab s nt) k.
@@ -383,7 +384,7 @@ Section Hashtable.
     case (key_index (PArray.length nt) i0=? key_index (PArray.length nt) (hash j)) eqn:Hm.
     + rewrite eqb_spec in Hm. rewrite Hm. rewrite get_set_same.
       rewrite find_all_rec_correct. simpl.
-      assert (Hd: hash j <> i0). 
+      assert (Hd: hash j <> i0).
       { rewrite eqb_spec in Heq. rewrite Heq in H.
         intros Hd. rewrite Hd in H. now apply H. }
       rewrite <- eqb_false_spec in Hd. rewrite Hd. simpl.
@@ -391,18 +392,18 @@ Section Hashtable.
       now apply fold_right_length.
     + rewrite get_set_other. exact IHb. now rewrite eqb_false_spec in Hm.
   Qed.
- 
+
   Lemma length_rect_non_neg:
     forall ht n,
     length ht =? 0 = false ->
     PArray.length
       (nat_rect (fun _ : nat => table) (make (length ht * 2) Empty)
         (fun (n0 : nat) (acc : table) =>
-          rehash_bucket acc (hashtab ht) (PArray.length acc) 
+          rehash_bucket acc (hashtab ht) (PArray.length acc)
           (length ht) (of_Z (Z.of_nat n0))) n) =? 0 = false.
   Proof.
     intros ht n H.
-    induction n. 
+    induction n.
     + simpl. rewrite length_make.
       case (length ht * 2 <=? max_length) eqn:H'.
       rewrite eqbP_false_to_Z in *. change (to_Z 0) with 0%Z in *.
@@ -420,14 +421,14 @@ Section Hashtable.
       PArray.length
         (nat_rect (fun _ : nat => table) (make (length ht * 2) Empty)
           (fun (n0 : nat) (acc : table) =>
-            rehash_bucket acc (hashtab ht) (PArray.length acc) 
+            rehash_bucket acc (hashtab ht) (PArray.length acc)
             (length ht) (of_Z (Z.of_nat n0))) n) = true.
   Proof.
-    induction n. 
+    induction n.
     + simpl. rewrite length_make.
       case (length ht * 2 <=? max_length) eqn:H.
       generalize (leb_length _ (hashtab ht)).
-      rewrite 2!leb_spec, mul_spec. change (to_Z 2) with 2%Z. 
+      rewrite 2!leb_spec, mul_spec. change (to_Z 2) with 2%Z.
       rewrite Z.mod_small. generalize (to_Z_bounded (length ht)). lia.
       split. generalize (to_Z_bounded (length ht)). lia.
       apply Z.le_lt_trans with (m:= ((to_Z max_length) * 2)%Z).
@@ -436,11 +437,11 @@ Section Hashtable.
       unfold length. apply leb_length.
     + simpl. rewrite rehash_bucket_length. apply IHn.
   Qed.
-      
+
   Lemma copy_tab_correct:
     forall (ht: t) (k: A) (i: int),
       length ht =? 0 = false ->
-      key_index (length ht) (hash k) <? i = true -> 
+      key_index (length ht) (hash k) <? i = true ->
       find_all (copy_tab ht i) k = find_all ht k.
   Proof.
     intros ht k i H. unfold length. rewrite ltb_spec. rewrite Z2Nat.inj_lt.
@@ -466,13 +467,13 @@ Section Hashtable.
         rewrite <- eqb_spec, eqbP_true_to_Z, of_Z_spec, Z.mod_small.
         rewrite Nat.ltb_ge, Nat2Z.inj_le, Z2Nat.id in Hn.
         2: apply to_Z_bounded.
-        unfold length. lia. lia. 
+        unfold length. lia. lia.
         clear IHn H0. rewrite Nat.ltb_ge in Hn.
         induction n.
         * simpl. unfold find_all, get_bucket. simpl.
           case (length _ =? 0). now simpl.
           rewrite get_make. now simpl.
-        * simpl. rewrite rehash_bucket_correct2. apply IHn. 
+        * simpl. rewrite rehash_bucket_correct2. apply IHn.
           lia. lia. assumption. now rewrite length_rect_non_neg.
           rewrite <- eqb_false_spec, eqbP_false_to_Z.
           rewrite of_Z_spec, Z.mod_small. 2: lia.
@@ -563,7 +564,7 @@ Section Hashtable.
     case (key_index (length (resize h)) (hash k) =? key_index (length (resize h)) (hash k')) eqn:Heq.
     + rewrite eqb_spec in Heq. rewrite <- Heq, get_set_same in *.
       simpl. rewrite eq_false. 2:exact Hdiff.
-      replace (if hash k' =? hash k then false else false) with false by now case (hash k' =? hash k). 
+      replace (if hash k' =? hash k then false else false) with false by now case (hash k' =? hash k).
       rewrite H. reflexivity.
       apply ltb_spec, key_index_max, length_resize_non_neg.
     + rewrite eqb_false_spec in Heq. rewrite get_set_other. 2:exact Heq.
@@ -598,7 +599,7 @@ Section Hashtable.
   Proof.
     induction b; intros k k' h h' Hk. easy. simpl.
     case (if h =? i then eq k a else false) eqn:Hc; simpl.
-    + assert ((if h' =? i then eq k' a else false) = false). 
+    + assert ((if h' =? i then eq k' a else false) = false).
       { case (h' =? i). 2:easy. apply eq_false.
         assert (Hkb: eq k a = true). case (h =? i) in Hc; easy.
         case (eq_spec k a) in Hkb; try discriminate.
@@ -642,7 +643,7 @@ Section Hashtable.
     simpl. 2:reflexivity.
     unfold get_bucket, length. simpl. rewrite length_set.
     case (PArray.length (hashtab ht) =? 0) eqn:Hl. reflexivity.
-    case (key_index (PArray.length (hashtab ht)) (hash k) =? 
+    case (key_index (PArray.length (hashtab ht)) (hash k) =?
           key_index (PArray.length (hashtab ht)) (hash k1)) eqn:Heq.
     apply eqb_spec in Heq. rewrite Heq. rewrite get_set_same.
     rewrite bucket_remove_other. reflexivity. exact Hk.
@@ -681,7 +682,7 @@ Section Hashtable.
     generalize (bucket_remove_same
         (hashtab (resize ht)).[key_index (length (replace ht key v)) (hash key)] key).
     simpl. rewrite 2!find_all_rec_correct. simpl. now intros [_ ->].
-    rewrite <- Heq. 
+    rewrite <- Heq.
     apply ltb_spec, key_index_max, length_resize_non_neg.
     2:unfold length, resize, replace; simpl; rewrite length_set.
     all:rewrite <- eqb_false_spec; apply length_resize_non_neg.
