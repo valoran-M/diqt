@@ -225,7 +225,19 @@ Module TestTree := Test HTree.
 Module HBucket := HashTableBucket INT.
 Module TestBucket := Test HBucket.
 
-(* Time Compute snd (FTest.syracuse_launch 100000%positive). *)
-Time Compute snd (TestTree.syracuse_launch 10000%positive).
-Time Compute snd (TestBucket.syracuse_launch 10000%positive).
+Time Compute snd (FTest.syracuse_launch 1000000%positive).
+Time Compute snd (TestTree.syracuse_launch 1000000%positive).
+Time Compute snd (TestBucket.syracuse_launch 1000000%positive).
+
+(* 
+   +-------------+--------+--------+--------+----------+----------+
+   | syracuse n  | n=100  | n=1000 | n=10000| n=100000 | n=1000000|
+   +-------------+--------+--------+--------+----------+----------+
+   | FMap Avl    | 0.004s | 0.044s | 0.403s | 3.87s    | 48.856s  |
+   +-------------+--------+--------+--------+----------+----------+
+   | IRadix Tree | 0.005s | 0.049s | 0.241s | 2.44s    | 29.237s  |
+   +-------------+--------+--------+--------+----------+----------+
+   | IBucket     | 0.003s | 0.021s | 0.146s | 1.243s   | 13.101s  | ~ / 10
+   +-------------+--------+--------+--------+----------+----------+
+*)
 
