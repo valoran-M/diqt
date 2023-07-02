@@ -48,11 +48,11 @@ Module Test (H: HashTable POS).
       end.
 
   Definition syracuse_launch n :=
-    Pos.iter for_i (fun h _ => (h, Ok)) n (H.create positive 16) 1.
+    snd (Pos.iter for_i (fun h _ => (h, Ok)) n (H.create positive 16) 1).
 
 End Test.
 
-Module FTest.
+Module FPTest.
   Module Import H := PositiveMap.
 
   Inductive syracuse_ret :=
@@ -79,23 +79,17 @@ Module FTest.
       end.
 
   Definition syracuse_launch n :=
-    Pos.iter for_i (fun h _ => (h, Ok)) n (H.empty positive) 1.
+    snd (Pos.iter for_i (fun h _ => (h, Ok)) n (H.empty positive) 1).
 
-End FTest.
+End FPTest.
 
 Module HTree := HashTableTree POS.
-Module TestTree := Test HTree.
+Module PTestTree := Test HTree.
 
 Module HBucket := HashTableBucket POS.
-Module TestBucket := Test HBucket.
+Module PTestBucket := Test HBucket.
 
-Let n := 1000000%positive.
-
-(* Time Compute snd (FTest.syracuse_launch n). *)
-(* Time Compute snd (TestTree.syracuse_launch n). *)
-Time Compute snd (TestBucket.syracuse_launch 1000000%positive).
-
-(* 
+(*
    +-------------+--------+--------+--------+----------+----------+
    | syracuse n  | n=100  | n=1000 | n=10000| n=100000 | n=1000000|
    +-------------+--------+--------+--------+----------+----------+

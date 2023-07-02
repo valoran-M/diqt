@@ -82,7 +82,7 @@ Module Test (H: HashTable INT).
       end.
 
   Definition syracuse_launch n :=
-    Pos.iter for_i (fun h _ => (h, Ok)) n (H.create int 16) 1.
+    snd (Pos.iter for_i (fun h _ => (h, Ok)) n (H.create int 16) 1).
 
 End Test.
 
@@ -92,7 +92,7 @@ Module FINT.
 
   Lemma eq_refl:
     forall i, eq i i.
-  Proof. Search (_ = _).
+  Proof.
     unfold eq. intros i. apply eqb_spec, eqb_refl.
   Qed.
 
@@ -108,7 +108,7 @@ Module FINT.
     unfold eq. now intros x y z <- <-.
   Qed.
 
-  Definition eq_spec: 
+  Definition eq_spec:
     forall n m : int, reflect (n = m) (eqb n m).
   Proof.
     intros n m. case (n =? m) eqn: Hn.
@@ -214,22 +214,37 @@ Module FTest.
       end.
 
   Definition syracuse_launch n :=
-    Pos.iter for_i (fun h _ => (h, Ok)) n (M.empty int) 1.
+    snd (Pos.iter for_i (fun h _ => (h, Ok)) n (M.empty int) 1).
 
 End FTest.
 
-
 Module HTree := HashTableTree INT.
-Module TestTree := Test HTree.
+Module ITestTree := Test HTree.
 
 Module HBucket := HashTableBucket INT.
-Module TestBucket := Test HBucket.
+Module ITestBucket := Test HBucket.
 
-Time Compute snd (FTest.syracuse_launch 1000000%positive).
-Time Compute snd (TestTree.syracuse_launch 1000000%positive).
-Time Compute snd (TestBucket.syracuse_launch 1000000%positive).
+(*@ test_syracuse
+    for i : 100 -> 100000
+      {s
+        Require Import syracuse syracuse_pos.
+        Let n := Z.to_pos i.
+      s}
+      (* FMap_AVL *)
+      { Time Compute FTest.syracuse_launch n. }
+      (* IRadix *)
+      { Time Compute ITestTree.syracuse_launch n. }
+      (* IBucket *)
+      { Time Compute ITestBucket.syracuse_launch n. }
+      (* FMap_Pos *)
+      { Time Compute FPTest.syracuse_launch n. }
+      (* PRadix *)
+      { Time Compute PTestTree.syracuse_launch n. }
+      (* PBucket *)
+      { Time Compute PTestBucket.syracuse_launch n. }
+ @*)
 
-(* 
+(*
    +-------------+--------+--------+--------+----------+----------+
    | syracuse n  | n=100  | n=1000 | n=10000| n=100000 | n=1000000|
    +-------------+--------+--------+--------+----------+----------+
