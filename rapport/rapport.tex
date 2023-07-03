@@ -51,10 +51,10 @@ l'arithmétique des ordinateurs et de la preuve formelle.
 
   Coq est un assistant de preuve basé sur de la théorie de types. De ce fait, il
 possède un langage de programmation qui peut être extrait vers OCaml ou
-directement interpréter. Le projet ERC Fresco
+directement interprété. Le projet ERC Fresco
 \footnote{\url{https://fresco.gitlabpages.inria.fr/}} vise à transformer
 ce langage en un outil rapide de calcul formel. Un élément clé est la conception
-d'un langage de programmation dédié ainsi que des structures de donnée de haut
+d'un langage de programmation dédié ainsi que des structures de données de haut
 niveau. Le but de ce stage est de se pencher sur les structures de données
 associatives en utilisant les tableaux persistants ajoutés en 2010 à Coq.
 
@@ -70,11 +70,11 @@ extraits vers OCaml donc il y a peu d'intérêt à créer des structures perform
 directement dans ce langage. Toutefois, de nos jours, Coq est largement répandu
 et est utilisé dans des projets qui exploitent directement son interpréteur.
 Aujourd'hui les seules structures de dictionnaires disponibles sont les
-FMapAVL qui sont difficile à prendre en main et peut performant. Une
+FMapAVL qui sont difficiles à prendre en main et peu performantes. Une
 implémentation de table de hachage est disponible dans la bibliothèque standard
-de Coq, elle à été faite à partir d'arbre de Patricia
-\footnote{\url{https://coq.inria.fr/library/Coq.FSets.FMapPositive.html}}
-Cependant Une structure de données plus rapide serait bénéfique pour des
+de Coq, elle a été faite à partir d'arbre de Patricia
+\footnote{\url{https://coq.inria.fr/library/Coq.FSets.FMapPositive.html}}.
+Cependant une structure de données plus rapide serait bénéfique pour des
 opérations telles que la mémoïsation ou le partage maximal
 \cite{braibant2014implementing}.
 
@@ -90,10 +90,10 @@ peut également augmenter.
     \subsection{Travail effectué}
 
 Le but du stage est d'explorer différentes implémentations de dictionnaires
-basés sur des tableaux en Coq. Le premier travail réalisé a consisté à
+basées sur des tableaux en Coq. Le premier travail réalisé a consisté à
 comprendre comment les tableaux sont implémentés en Coq en se référant à la
 littérature existante \cite{armand2010extending}. Les entiers machines sont
-utilisés par les tableaux pour des raisons d'efficacité, il est donc important
+utilisés par les tableaux pour des raisons d'efficacité : il est donc important
 de bien comprendre leur fonctionnement. L'implémentation des tableaux utilise
 la structure persistante de Baker. Pour approfondir mes connaissances, j'ai lu
 l'article de Baker lui-même \cite{baker1991shallow}, ainsi que celui de
@@ -109,11 +109,11 @@ différentes implémentations des tables de hachage, j'ai pensé qu'il serait
 plus simple de commencer par implémenter les tableaux avec une résolution des
 collisions à l'aide de listes chaînées.
 
-  J'ai utilisé les tableaux de Coq pour faire une première implémentation naïf
-de table de hachage pour avoir une première base travaille. Pour la résolution
-de collision j'ai utiliser des seaux, c'est-à-dire que les case du tableaux sont
-composées de liste chainée, donc si deux éléments avec deux clé différentes sont
-attribué à la même case alors ils sont tout les deux ajouté à la liste
+  J'ai utilisé les tableaux de Coq pour faire une première implémentation naïve
+de table de hachage pour avoir une première base de travail. Pour la résolution
+de collision j'ai utilisé des seaux, c'est-à-dire que les cases du tableau sont
+composées de liste chainée, donc si deux éléments avec deux clés différentes sont
+attribués à la même case alors ils sont tous les deux ajoutés à la liste.
 
 Ainsi, j'ai défini le type des tables de la manière suivante :
 
@@ -129,10 +129,10 @@ Ainsi, j'ai défini le type des tables de la manière suivante :
 \end{lstlisting}
 
   Ensuite, j'ai défini les fonctions de base : \texttt{add}, \texttt{empty},
-\texttt{find}. J'ai choisi de faire des tables de hachage similaires à celle
-d'OCaml, c'est-à-dire de cacher les anciennes valeur d'une clé à chaque ajout.
-\`A cause de ce choix j'ai dût définir une nouvelle fonction \texttt{findall} qui
-donne toutes les valeurs associé à la même clé. J'ai donc fait mes premières
+\texttt{find}. J'ai choisi de faire des tables de hachage similaires à celles
+d'OCaml, c'est-à-dire de cacher les anciennes valeurs d'une clé à chaque ajout.
+\`A cause de ce choix j'ai défini une nouvelle fonction \texttt{findall} qui
+donne toutes les valeurs associées à la même clé. J'ai donc fait mes premières
 preuves sur les tableaux en spécifiant ces fonctions.
 
 \begin{lstlisting}[language=Coq]
@@ -143,28 +143,28 @@ preuves sur les tableaux en spécifiant ces fonctions.
     k' <> k -> find_all (add h k v) k' = find_all h k'.
 \end{lstlisting}
 
-  La plus part des fonctions récursive sont écrite en récursive terminal. Pour
-pouvoir faire des preuves par récurrence j'ai écrit les même fonction sans faire
-d'optimisation. Ensuite, j'ai prouvé qu'elles avaient le même résultat pour
-pouvoir faire des réécriture dans les preuves et enfin faire une récurrence.
+  La plupart des fonctions récursives sont écrites en récursive terminale. Pour
+pouvoir faire des preuves par récurrence j'ai écrit les mêmes fonctions sans
+faire d'optimisation. Ensuite, j'ai prouvé qu'elles ont le même résultat pour
+pouvoir faire des réécritures dans les preuves et enfin faire une récurrence.
 
   \subsubsection{Tableaux dynamique}
 
 
   Dans un langage impératif pour avoir une table de hachage efficace il faut
-utiliser des tableaux dynamique. Je vais donc tester si faire cette
+utiliser des tableaux dynamiques. Je vais donc tester si faire cette
 transformation va rendre la structure plus efficace.
 
 J'ai décomposé le problème en 3 fonctions :
 
 \begin{itemize}
-  \item \texttt{rehash\_bucket}: récupère les élément d'une case pour les mettre
+  \item \texttt{rehash\_bucket}: récupère les éléments d'une case pour les mettre
     dans la nouvelle table.
   \item \texttt{copy\_tab}: copie un tableau dans un nouveau tableau.
   \item \texttt{resize}: va redimensionner la table de hachage
 \end{itemize}
 
-J'ai spécifié \texttt{resize} avec cette formule
+J'ai spécifié \texttt{resize} avec cette formule :
 
 \begin{lstlisting}[language=Coq]
   Lemma find_all_resize:
@@ -173,16 +173,16 @@ J'ai spécifié \texttt{resize} avec cette formule
 \end{lstlisting}
 
   Cette spécification a été très difficile à prouver, car \texttt{resize}
-utilise deux autres fonctions externe récursive. Pour
-commencer, j'ai attribuer certaines propriétés aux deux autres
+utilise deux autres fonctions externes récursives. Pour
+commencer, j'ai attribué certaines propriétés aux deux autres
 fonctions, qui ont été admises initialement pour m'assurer de leur utilité
 par la suite. Une fois que cette étape de preuve a été réussie, j'ai
 prouvé toutes les assertions liées à la fonction en question, parfois sans
 disposer de suffisamment d'hypothèses. Pour mener à bien ces preuves, j'ai
-également ajouter des conditions dans le programme afin de vérifier
+également ajouté des conditions dans le programme afin de vérifier
 si un élément se trouve effectivement dans le bon seau.
 
-  Dans la preuves de correction des fonctions j'ai rencontré une première
+  Dans la preuve de correction des fonctions j'ai rencontré une
 difficulté : un utilisateur pourrait fournir n'importe quelle table en paramètre
 des fonctions, et je n'ai donc aucune information sur la valeur par défaut de
 la table ou si les éléments sont dans le bon saut (complication pour
@@ -191,12 +191,12 @@ sur la structure de données, soit ajouter des conditions dans le programme pour
 gérer les cas impossibles dans les preuves. J'ai choisi la deuxième solution,
 car la création d'un invariant aurait impliqué la création de termes de preuve
 très complexes, ce qui aurait entraîné une perte de la rapidité des entiers
-machine (il aurait souvent fallu passer par des représentations de nombres peu
-performantes dans les preuves). De plus il aurais sûrement fallu avoir un
-historique des écriture dans la tables ce qui aurais empêcher le \textit{garbage
+machine. Souvent, il aurait fallu passer par des représentations de nombres peu
+performantes dans les preuves. De plus, il aurait fallu avoir un
+historique des écritures dans la table ce qui aurait empêché le \textit{garbage
 collector} de libérer la mémoire.
 
-Par exemple, pour la fonction \texttt{rehash\_bucket} j'ai rajouté se test en
+Par exemple, pour la fonction \texttt{rehash\_bucket} j'ai rajouté ce test en
 plus :
 
 \begin{lstlisting}[language=Coq]
@@ -209,28 +209,29 @@ plus :
     new_tab last_tab.[i].
 \end{lstlisting}
 
-      \subsubsection{Tests réalisé}
+      \subsubsection{Tests réalisés}
 
   Au départ, j'ai cherché à écrire des fonctions qui pourraient
 bénéficier d'une optimisation par mémoïsation. J'ai immédiatement pensé à la
 fonction de Fibonacci. Cependant, en effectuant cette optimisation, la
 complexité devient linéaire et le résultat augmente de manière exponentielle,
-ce qui entraîne rapidement des débordements. J'aurai pu lancer plusieurs fois la
-fonction mais au lieux de ça j'ai cherché une fonction memoïsante plus
+ce qui entraîne rapidement des débordements. J'aurais pu lancer plusieurs fois la
+fonction mais au lieu de ça j'ai cherché une fonction memoïsante plus
 difficile à calculer. J'ai écrit une fonction qui calcule
 les coefficients binomiaux à l'aide du triangle de Pascal. Ma fonction va faire
 $\mathcal{O}(n^2)$ accès à la table. Pour la memoïsation, j'ai comme type
-de clé un couple d'entier et comme valeur un entiers. Il faut aussi créer une
-fonction de hachage qui éviterait le plus possible les collisions, j'ai
-choisi d'utiliser $h(k1, k2)= k1 + k2 \times 345$. Il a fallu aussi faire une
-version avec une paire de \textit{positive}\footnote{Représentation d'un nombre
+de clé un couple d'entier et comme valeur un entier. Il faut aussi créer une
+fonction de hachage qui éviterait le plus possible les collisions : j'ai
+choisi d'utiliser $h(k1, k2)= k1 + k2 \times n$ ($n$ une constante).
+Il a fallu aussi faire une version avec une paire de
+\textit{positive}\footnote{Représentation d'un nombre
 en binaire avec une liste chainée} car les arbres de Patricia vont utiliser ce
 type. J'ai utilisé la même fonction puis transformé l'entier
 machine en \textit{positive}, cette transformation est de complexité
 $\mathcal{O}(\log(n))$ donc un peu coûteuse. Il y a donc deux versions du
 test : une avec des clés qui ont une fonction de hachage couteuse et l'autre
-avec une fonction de hachage gratuite. J'ai aussi fait le tests avec les
-FMap de la bibliothèque standard de Coq\footnote{
+avec une fonction de hachage gratuite. J'ai aussi fait le test avec les
+\textit{FMap} de la bibliothèque standard de Coq\footnote{
 \url{https://coq.inria.fr/library/Coq.FSets.FMapAVL.html}}.
 
 \begin{figure}[ht]
@@ -240,7 +241,7 @@ FMap de la bibliothèque standard de Coq\footnote{
   \label{fig:pascal}
 \end{figure}
 
-J'ai pû mesurer de très bonnes performances pour les tables de hachage
+J'ai pu mesurer de très bonnes performances pour les tables de hachage
 sur les entiers \hyperref[fig:pascal]{Tableau-1}. ``Table int'' et ``Patricia''
 représentent les deux structures créées avec une fonction de hachage gratuite,
 contrairement à ``Table Nat'' et ``Patricia Nat'' qui utilisent une fonction de
@@ -250,8 +251,8 @@ hachage coûteuse.
 
   J'ai aussi fait une fonction qui vérifie la conjecture de Syracuse
 jusqu'à un certain entier $n$. J'utilise des dictionnaires pour retenir les
-valeurs déjà croisées, on leur associe l'entier de départ de la suite. Grâce à cet
-enregistrement je peux vérifier si j'ai trouvé une boucle (arrêt du
+valeurs déjà croisées. On leur associe l'entier de départ de la suite. Grâce à
+cet enregistrement je peux vérifier si j'ai trouvé une boucle (arrêt du
 calcul) ou si la valeur a déjà été rencontrée (passage à la prochaine valeur).
 Les tests de performances ont été effectués avec deux types de valeur numérique :
 les entiers machines et les \textit{positive}. J'ai testé avec mon implémentation
@@ -267,16 +268,16 @@ aussi utilisé les \textit{PositiveMap}
   \label{fig:syracuse}
 \end{figure}
 
-  De ces deux graphe on peut conclure que les tables de hachage sont largement
-plus performante que des arbres pour des calculs mémoïsant faisant intervenir
-uniquement des entiers machines. Sinon si les fonctions utilise d'autre type de
-donnée comme les \textit{positive} le cous de conversion vers les entiers
-machine ce ressent dans le temps d'exécution.
+  De ces deux graphes on peut conclure que les tables de hachage sont largement
+plus performantes que des arbres pour des calculs mémoïsant faisant intervenir
+uniquement des entiers machines. Sinon si les fonctions utilisent d'autres types
+de donnée comme les \textit{positive} le coût de conversion vers les entiers
+machines se ressent dans le temps d'exécution.
 
   Pour la suite du stage il serait utile de faire de nouveaux tests en essayant
-de pousser les optimisations des fonctions avec les arbres, par exemple passer
-avec les \textit{positive} pour le calcul des coefficients binomiaux. Ensuite il
-faudra que je fasse une librairie Coq pour rendre les tables de hachage
+de pousser les optimisations des fonctions avec les arbres. Par exemple, passer
+avec les \textit{positive} pour le calcul des coefficients binomiaux. Ensuite,
+il faudra que je fasse une librairie Coq pour rendre les tables de hachage
 utilisables pour tous.
 
   \newpage
@@ -285,7 +286,7 @@ utilisables pour tous.
   Ce stage a été une excellente opportunité pour apprendre de nouvelles choses
 et approfondir mes connaissances dans certains domaines. J'ai pu réaliser ce
 stage grâce au TER que j'ai effectué d'octobre à avril, et qui a été l'un des
-<<cours>> les plus utiles pour mener à bien ce stage. En travaillant sur
+``cours'' les plus utiles pour mener à bien ce stage. En travaillant sur
 CompCert, j'ai appris à utiliser Coq, et pour apprendre à réaliser des preuves,
 j'ai pu consulter le livre ``Coq'Art'' de Bertot et Casteran\cite{bertot2015coq},
 qui m'a généreusement été prêté par Christine Paulin-Mohring durant le TER et le
@@ -297,28 +298,28 @@ se passe dans Coq. Il m'a donné des bases solides pour être plus à l'aise lor
 de la lecture d'articles, car le lambda calcul est un concept très utilisé dans
 la preuve formelle.
 
-Avoir effectué ce stage m'a permis d'avoir une meilleure compréhension des
-tables de hachage que j'avais étudiées en cours d'algorithmique et en PFA
+  Avoir effectué ce stage m'a permis d'avoir une meilleure compréhension des
+tables de hachage que j'avais étudié en cours d'algorithmique et en PFA
 (Programmation Fonctionnelle Avancée). De plus, cela m'a permis de redécouvrir
 les assistants de preuves, car lors de mon cursus en LDD1, j'ai suivi un cours
-qui visait à apprendre à rédiger des preuves en utilisant une partie de
-l'assistant de preuves LEAN\footnote{Assistant de preuve.
-\url{https://leanprover.github.io/}}. Je trouve dommage qu'il n'y ait pas de
-continuité de ce cours en L2/L3, à l'exception du TER, car sans cette
-expérience, je n'aurais pas été en mesure de réaliser ce stage.
+qui visait à apprendre la rédaction de preuves en utilisant une partie de
+l'assistant de preuve LEAN\footnote{\url{https://leanprover.github.io/}}.
+Je trouve dommage qu'il n'y ait pas de continuité de ce cours en L2/L3, à
+l'exception du TER, car sans cette expérience, je n'aurais pas été en mesure de
+réaliser ce stage.
 
 Grâce à ce stage, je suis confiant dans le fait que j'aurai de solides bases
 pour intégrer le \textit{Master Parisien de Recherche en Informatique}. Cette
 expérience m'a confirmé que les méthodes formelles sont la voie que
 je souhaite suivre.
 
-  \section{Remerciement}
+  \section{Remerciements}
 
   Pour conclure, j'aimerais remercier les personnes qui ont contribué au bon
 déroulement de mon stage et du TER. Tout d'abord, je tiens à remercier Sylvain
 Conchon pour m'avoir mis en contact avec Guillaume, que je remercie également
-pour m'avoir appris tant de choses tout au long de cette année et pour s'être
-occupé de moi une journée par semaine pendant un an. Je souhaite également
+pour m'avoir appris tant de choses tout au long de cette année et pour m'avoir
+accompagné une journée par semaine pendant un an. Je souhaite également
 exprimer ma gratitude envers Jean-Christophe Filliâtre pour m'avoir
 généreusement prêté des livres, ce qui a suscité mon intérêt pour la lecture
 scientifique. Enfin, je tiens à remercier tous les chercheurs du LMF pour leur
