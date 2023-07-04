@@ -89,6 +89,8 @@ Module PTestTree := Test HTree.
 Module HBucket := HashTableBucket POS.
 Module PTestBucket := Test HBucket.
 
+Time Compute FPTest.syracuse_launch 100000.
+
 (*
    +-------------+--------+--------+--------+----------+----------+
    | syracuse n  | n=100  | n=1000 | n=10000| n=100000 | n=1000000|
@@ -97,7 +99,7 @@ Module PTestBucket := Test HBucket.
    +-------------+--------+--------+--------+----------+----------+
    | PRadix Tree | 0.003s | 0.035s | 0.158s | 1.794s   | 19.57s   |
    +-------------+--------+--------+--------+----------+----------+
-   | PBucket     | 0.003s | 0.023s | 0.191s | 1.747s   | 18.251s  | ~ / 10
+   | PBucket     | 0.003s | 0.023s | 0.191s | 1.747s   | 18.251s  |
    +-------------+--------+--------+--------+----------+----------+
 *)
 

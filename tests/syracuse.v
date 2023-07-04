@@ -224,6 +224,8 @@ Module ITestTree := Test HTree.
 Module HBucket := HashTableBucket INT.
 Module ITestBucket := Test HBucket.
 
+Time Compute ITestBucket.syracuse_launch 100000.
+
 (*@ test_syracuse
     for i : 100 -> 100000
       {s
