@@ -218,13 +218,42 @@ Module FTest.
 
 End FTest.
 
+Module LTest.
+
+  Inductive syracuse_ret :=
+    | Ok       : syracuse_ret
+    | Overflow : int -> syracuse_ret
+    | TimeOut  : int -> syracuse_ret
+    | Loop     : int -> syracuse_ret.
+
+  Definition while k (n: int) (m: int) (i: int) :=
+    if      3074457345618258602 <? n then Overflow i
+    else if 3074457345618258602 <? m then Overflow i
+    else
+      let n' := syracuse n in
+      let m' := syracuse (syracuse m) in
+      if      n' <? i then Ok
+      else if n' =? m' then Loop i 
+      else k n' m' i.
+
+  Definition for_i k (i: int) :=
+    match Pos.iter while (fun _ _ _ => TimeOut i) 1000 i i i with
+    | Ok => k (i + 1)
+    | x  => x
+    end.
+
+  Definition syracuse_launch n :=
+    Pos.iter for_i (fun _ => Ok) n 2.
+End LTest.
+
 Module HTree := HashTableTree INT.
 Module ITestTree := Test HTree.
 
 Module HBucket := HashTableBucket INT.
 Module ITestBucket := Test HBucket.
 
-Time Compute ITestBucket.syracuse_launch 100000.
+Time Compute LTest.syracuse_launch 1000000.
+(* Time Compute ITestBucket.syracuse_launch 100000. *)
 
 (*@ test_syracuse
     for i : 100 -> 100000
