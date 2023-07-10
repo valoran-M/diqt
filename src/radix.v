@@ -1,5 +1,4 @@
 Require Import ZArith.
-Require Import tree.
 
 Open Scope positive_scope.
 

@@ -3,7 +3,7 @@ set term cairolatex
 set logscale xy
 set xtics 100, 10, 10000000 logscale
 unset mxtics
-set ytics 0.001, 50, 10 logscale format "%g"
+set ytics 0.001, 10, 100 logscale format "%g"
 set output "plot_syracuse_v2.tex"
 set key right bottom
 set xlabel "n"

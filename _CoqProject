@@ -1,2 +1,6 @@
--R src stage -R tests stage
-src tests
+-R src Diqt
+src/hashtable.v
+src/module.v
+src/dict.v
+src/radix.v
+src/utils.v
