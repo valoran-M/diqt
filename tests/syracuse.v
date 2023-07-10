@@ -227,14 +227,15 @@ Module LTest.
     | Loop     : int -> syracuse_ret.
 
   Definition while k (n: int) (m: int) (i: int) :=
-    if      3074457345618258602 <? n then Overflow i
-    else if 3074457345618258602 <? m then Overflow i
-    else
-      let n' := syracuse n in
-      let m' := syracuse (syracuse m) in
-      if      n' <? i then Ok
-      else if n' =? m' then Loop i 
-      else k n' m' i.
+    if 3074457345618258602 <? m then Overflow i else 
+    let m' := syracuse m in
+    if m' <? i then Ok else
+    if 3074457345618258602 <? m' then Overflow i else
+    let m'' := syracuse m' in
+    if m'' <? i then Ok else
+    let n' := syracuse n in
+    if n' =? m'' then Loop i
+                 else k n' m'' i.
 
   Definition for_i k (i: int) :=
     match Pos.iter while (fun _ _ _ => TimeOut i) 1000 i i i with
@@ -252,11 +253,11 @@ Module ITestTree := Test HTree.
 Module HBucket := HashTableBucket INT.
 Module ITestBucket := Test HBucket.
 
-Time Compute LTest.syracuse_launch 1000000.
+(* Time Compute LTest.syracuse_launch 1000000. *)
 (* Time Compute ITestBucket.syracuse_launch 100000. *)
 
 (*@ test_syracuse
-    for i : 100 -> 100000
+    for i : 100 -> 1000000
       {s
         Require Import syracuse syracuse_pos.
         Let n := Z.to_pos i.
@@ -273,6 +274,9 @@ Time Compute LTest.syracuse_launch 1000000.
       { Time Compute PTestTree.syracuse_launch n. }
       (* PBucket *)
       { Time Compute PTestBucket.syracuse_launch n. }
+      (* LT *)
+      { Time Compute LTest.syracuse_launch n. }
+ 
  @*)
 
 (*

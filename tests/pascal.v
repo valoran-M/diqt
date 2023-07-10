@@ -15,7 +15,27 @@ Fixpoint pascal (n m: nat) : int :=
   | S n', S m' => pascal n' m' + pascal n' m
   end.
 
-(* int couple *)
+Compute pascal 10 5.
+
+Lemma pascal_zero :
+  forall n m, n < m -> pascal n m = 0.
+Proof.
+  induction n; simpl.
+  + destruct m; easy.
+  + destruct m. easy. intros H.
+    apply Nat.succ_lt_mono in H.
+    rewrite 2!IHn. easy.
+    apply Nat.lt_lt_succ_r; easy. easy.
+Qed.
+
+Theorem pascal_one :
+  forall n, pascal n n = 1.
+Proof.
+  induction n. reflexivity.
+  simpl. rewrite IHn.
+  rewrite pascal_zero. reflexivity.
+  apply Nat.lt_succ_diag_r.
+Qed.
 
 Inductive intint :=
   | I : int -> int -> intint.

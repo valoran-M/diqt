@@ -1,19 +1,20 @@
 set datafile separator ";"
 set term cairolatex
 set logscale xy
-set xtics 100, 10, 1000000 logscale
+set xtics 100, 10, 10000000 logscale
 unset mxtics
-set ytics 0.001, 10, 10 logscale format "%g"
-set output "rapport/plot_syracuse_v1.tex"
+set ytics 0.001, 50, 10 logscale format "%g"
+set output "plot_syracuse_v2.tex"
 set key right bottom
 set xlabel "n"
 set ylabel "temps (s)"
 
-plot [n=100:100000] [0.001:10] \
+plot [n=100:1000000] [0.001:50] \
   n/10000 dt 2, \
-  "times_syracuse_v2.csv" using ($1):($7) title "FMapAVL Int" with lines, \
-  "times_syracuse_v2.csv" using ($1):($6) title "Patricia Int" with lines, \
-  "times_syracuse_v2.csv" using ($1):($2) title "Table Pos" with lines, \
-  "times_syracuse_v2.csv" using ($1):($3) title "Patricia Pos" with lines, \
-  "times_syracuse_v2.csv" using ($1):($4) title "PosMap Pos" with lines, \
-  "times_syracuse_v2.csv" using ($1):($5) title "Table Int" with lines
+  "times_syracuse_v4.csv" using ($1):($8) title "FMapAVL Int" with lines, \
+  "times_syracuse_v4.csv" using ($1):($7) title "Patricia Int" with lines, \
+  "times_syracuse_v4.csv" using ($1):($2) title "Lièvre Tortue" with lines, \
+  "times_syracuse_v4.csv" using ($1):($3) title "Table Pos" with lines, \
+  "times_syracuse_v4.csv" using ($1):($4) title "Patricia Pos" with lines, \
+  "times_syracuse_v4.csv" using ($1):($5) title "PosMap Pos" with lines, \
+  "times_syracuse_v4.csv" using ($1):($6) title "Table Int" with lines
