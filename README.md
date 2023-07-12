@@ -21,5 +21,54 @@ Coq hash table library
       Pascal function
     * [`test/syracuse.v`](./tests/syracuse.v) - HashTable int test on Syracuse
       function
-    * [`test/syracuse_pos.v`](./tests/syracuse_pos.v) - HashTable positive test on
-      Syracuse verification  function
+    * [`test/syracuse_pos.v`](./tests/syracuse_pos.v) - HashTable positive test
+      on Syracuse verification  function
+
+## Development
+
+The `main` branch is currently developed using Coq version 8.17.1.
+
+### Build
+
+```sh
+coq_makefile -f _CoqProject -o Makefile
+make
+```
+
+## Docs
+
+Function (A : Keys, B : Value) :
+
+```coq
+create : Set -> int -> t B
+add : t B -> A -> B -> t B
+find : t B -> A -> option B
+find_all : t B -> A -> list B
+mem : t B -> A -> bool
+remove : t B -> A -> t B
+replace : t B -> A -> B -> t B
+```
+
+### [`Hashtable Int`](./src/HashTable.v) functor
+
+```coq
+Module Type HashI.
+  Parameter A: Set.
+  Parameter eq: A -> A -> bool.
+  Parameter eq_spec: forall x y : A, reflect (x = y) (eq x y).
+  Parameter hash: A -> int.
+End HashI.
+```
+
+### [`HashTable Positive`](./src/HashTablePositive.v) functor
+
+```coq
+Module Type HashP.
+  Parameter A : Set.
+  Parameter eq : A -> A -> bool.
+  Parameter eq_spec : forall x y : A, reflect (x = y) (eq x y).
+  Parameter hash : A -> positive.
+End HashP.
+```
+
+## Tests
