@@ -1,10 +1,12 @@
-Require Import Coq.Lists.List.
 Require Import ZArith.
 Require Import Lia.
 Require Import Coq.Numbers.Cyclic.Int63.Uint63.
+
 Open Scope uint63_scope.
 
-Lemma eqbP_false_to_Z:
+(** Simple Facts on int *)
+
+Lemma eqbPF_to_Z:
   forall x y, x =? y = false <-> to_Z x <> to_Z y.
 Proof.
   intros x y.
@@ -14,7 +16,7 @@ Proof.
     easy.
 Qed.
 
-Lemma eqbP_true_to_Z:
+Lemma eqbPT_to_Z:
   forall x y, x =? y = true <-> to_Z x = to_Z y.
 Proof.
   intros x y.
@@ -22,15 +24,6 @@ Proof.
   + intros H. case (eqbP x y) in H; try discriminate. assumption.
   + intros H. case (eqbP x y); try easy.
 Qed.
-
-Import ListNotations.
-
-Section List.
-  Variable A: Type.
-  Variable B: Type.
-
-
-End List.
 
 Lemma add_neutral:
   forall (u: int), u + 0 = u.
@@ -41,6 +34,8 @@ Proof.
   apply of_to_Z.
   generalize (to_Z_bounded u). lia.
 Qed.
+
+(** Fold_int functions *)
 
 Lemma fold_int_aux:
   forall (i e: int), i <? e = true-> i <? i + 1 = true.
@@ -100,6 +95,8 @@ Qed.
 
 Definition fold_int {T: Type} (f : int -> T -> T) (e: int) (acc: T) :=
   fold_int' T f 0 e acc (Acc_intro_generator 22 acc_int 0).
+
+(** Fold_int spec *)
 
 Lemma suc_sub:
   forall n m,

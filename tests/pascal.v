@@ -1,4 +1,4 @@
-Require Import hashtable dict module utils.
+Require Import hashtable dict module int_utils.
 Require Import ZArith Bool.
 Require Import Coq.Numbers.Cyclic.Int63.Uint63.
 Require Import Coq.FSets.FMapAVL.

@@ -369,3 +369,4 @@ Makefile*
 benchmark/*.exe
 benchmark/*.ml
 benchmark/*.term
+html

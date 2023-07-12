@@ -1,0 +1,39 @@
+opam-version: "2.0"
+maintainer: "valeran.maytie@universite-paris-saclay.fr"
+
+homepage: "https://github.com/valoran-M/diqt/"
+bug-reports: "https://github.com/valoran-M/diqt/issues"
+license: "CECILL-B"
+build: [["coq_makefile" "-f" "_CoqProject" "-o" "Makefile" ]
+       [ make "-j" "%{jobs}%" ]]
+install: [ make "install" ]
+depends: [
+  "coq" {>= "8.13"}
+]
+dev-repo: "git+https://github.com/valoran-M/diqt.git"
+tags: [ 
+  "keyword:hashtables"
+  "keyword:primitive arrays"
+  "keyword:data structures"
+  "keyword:dictionaries" 
+  "category:Computer Science/Data Types and Data Structures"
+  "logpath:Diqt"
+  "date:2023-07-10" ]
+authors: [ "Valeran Maytié <valeran.maytie@universite-paris-saclay.fr>" ]
+synopsis:
+  "Computing thousands or millions of digits of PI with arithmetic-geometric means"
+description: """
+This is a proof of correctness for two algorithms to compute PI to high
+precision using arithmetic-geometric means.  A first file contains
+the calculus-based proofs for an abstract view of the algorithm, where all
+numbers are real numbers.  A second file describes how to approximate all
+computations using large integers.  Other files describe the second algorithm
+which is close to the one used in mpfr, for instance.
+
+The whole development can be used to produce mathematically proved and
+formally verified approximations of PI."""
+
+url {
+  src: "https://github.com/ybertot/pi-agm/archive/v1.2.6.zip"
+  checksum: "sha256=f690dd8e464acafb4c14437a0ad09545a11f4ebd6771b05f4e7f74ca5c08a7ff"
+}
