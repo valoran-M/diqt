@@ -75,6 +75,11 @@ End HashP.
 
 ## Tests
 
+* `Table [Type keys]` : HashTable with PArray
+* `Positive [Type keys]` : HashTable with Tree
+* `FMap AVL` : Associative structure with [`FMAP AVL`](https://coq.inria.fr/library/Coq.FSets.FMapAVL.html)
+* `PosMap Pos` : Associative structure with [`PosMap`](https://coq.inria.fr/library/Coq.FSets.FMapPositive.html)
+
 ### Pascal Function
 
 ![pascal](./imgs/plot_pascal.png)
