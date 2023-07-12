@@ -1,10 +1,10 @@
 set datafile separator ";"
-set term cairolatex
+set term pngcairo
 set logscale xy
 set xtics 20, 2, 200 logscale
 unset mxtics
 set ytics 0.00001, 10, 10 logscale format "%g"
-set output "rapport/plot_pascal_v1.tex"
+set output "plot_pascal.png"
 set key right bottom
 set xlabel "n"
 set ylabel "temps (s)"

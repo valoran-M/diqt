@@ -360,7 +360,6 @@ TSWLatexianTemp*
 
 # End of https://www.toptal.com/developers/gitignore/api/coq
 tmp*
-*.png
 *.csv
 *.ods
 *.ods#

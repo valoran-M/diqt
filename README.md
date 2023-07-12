@@ -37,6 +37,8 @@ make
 
 ## Docs
 
+Full documentation : [diqt](https://valoran-m.github.io/diqt/toc.html)
+
 Function (A : Keys, B : Value) :
 
 ```coq
@@ -49,7 +51,7 @@ remove : t B -> A -> t B
 replace : t B -> A -> B -> t B
 ```
 
-### [`Hashtable Int`](./src/HashTable.v) functor
+### [`Hashtable Int`](./src/HashTable.v) keys functor
 
 ```coq
 Module Type HashI.
@@ -60,7 +62,7 @@ Module Type HashI.
 End HashI.
 ```
 
-### [`HashTable Positive`](./src/HashTablePositive.v) functor
+### [`HashTable Positive`](./src/HashTablePositive.v) keys functor
 
 ```coq
 Module Type HashP.
@@ -72,3 +74,11 @@ End HashP.
 ```
 
 ## Tests
+
+### Pascal Function
+
+![pascal](./imgs/plot_pascal.png)
+
+### Syracuse Function
+
+![Syracuse](./imgs/plot_syracuse.png)

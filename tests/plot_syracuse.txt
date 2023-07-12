@@ -1,10 +1,10 @@
 set datafile separator ";"
-set term cairolatex
+set term pngcairo
 set logscale xy
 set xtics 100, 10, 10000000 logscale
 unset mxtics
 set ytics 0.001, 10, 100 logscale format "%g"
-set output "plot_syracuse_v2.tex"
+set output "imgs/plot_syracuse.png"
 set key right bottom
 set xlabel "n"
 set ylabel "temps (s)"
