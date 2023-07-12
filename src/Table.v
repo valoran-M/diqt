@@ -10,6 +10,8 @@ Import ListNotations.
 
 Open Scope uint63_scope.
 
+(** hashtable implantation with PArray *)
+
 Section Hashtable.
   Context {A B: Set}.
   Variable eq: A -> A -> bool.
@@ -26,6 +28,8 @@ Section Hashtable.
     size : int;
     hashtab : table;
   }.
+
+  (** ** Hashtable functions *)
 
   Definition length t : int :=
     PArray.length (hashtab t).
@@ -173,6 +177,8 @@ Section Hashtable.
   Definition fold {Acc: Type} h f (acc: Acc) :=
     let length := length h in
     fold_int (fun i => fold_bucket (hashtab h).[i] f i length) length acc.
+
+  (** ** Hashtables facts *)
 
   (** Eq *)
   Lemma eq_true:

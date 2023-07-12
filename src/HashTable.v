@@ -7,7 +7,9 @@ Import ListNotations.
 
 Open Scope uint63_scope.
 
-(** *** HashTable: Hashtable with PArray *)
+(** * HashTable
+
+  Hashtable with PArray *)
 
 Module HashTable (T: HashI).
   Definition t := @Table.t T.A.

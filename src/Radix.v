@@ -6,6 +6,8 @@ Import ListNotations.
 
 Open Scope positive_scope.
 
+(** Radix tree for hashtable *)
+
 Section Radix.
   Variable A: Set.
   Variable eq: A -> A -> bool.
@@ -155,6 +157,8 @@ Section Radix.
     | B_Empty => set h (B_Cons h k e B_Empty) d
     | b       => set h (B_Cons h k e (bucket_remove b h k)) d
     end.
+
+  (** ** Hashtables facts *)
 
   (** Eq *)
 

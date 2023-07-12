@@ -35,7 +35,7 @@ Proof.
   generalize (to_Z_bounded u). lia.
 Qed.
 
-(** Fold_int functions *)
+(** fold_int function *)
 
 Lemma fold_int_aux:
   forall (i e: int), i <? e = true-> i <? i + 1 = true.
@@ -96,7 +96,7 @@ Qed.
 Definition fold_int {T: Type} (f : int -> T -> T) (e: int) (acc: T) :=
   fold_int' T f 0 e acc (Acc_intro_generator 22 acc_int 0).
 
-(** Fold_int spec *)
+(** fold_int spec *)
 
 Lemma suc_sub:
   forall n m,

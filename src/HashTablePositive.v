@@ -8,7 +8,9 @@ Import ListNotations.
 
 Open Scope uint63_scope.
 
-(** ** HashTablePositive: Hashtable with positive key (PATRICIA tree) *)
+(** * HashTablePositive
+
+  Hashtable with positive key (PATRICIA tree) *)
 
 Module HashTablePositive (T: HashP).
   Definition t := @Radix.tree T.A.
