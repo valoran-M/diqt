@@ -41,7 +41,7 @@ Full documentation : [diqt](https://valoran-m.github.io/diqt/toc.html)
 
 Function (A : Keys, B : Value) :
 
-```coq
+```
 create : Set -> int -> t B
 add : t B -> A -> B -> t B
 find : t B -> A -> option B
