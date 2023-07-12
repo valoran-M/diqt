@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>Diqt.Keys</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Diqt.Keys</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Bool.Bool.html#"><span class="id" title="library">Bool</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="library">ZArith</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Numbers.Cyclic.Int63.Uint63.html#"><span class="id" title="library">Coq.Numbers.Cyclic.Int63.Uint63</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Keys modules 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="Eq" class="idref" href="#Eq"><span class="id" title="module">Eq</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="Eq.A" class="idref" href="#Eq.A"><span class="id" title="axiom">A</span></a>: <span class="id" title="keyword">Set</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="Eq.eq" class="idref" href="#Eq.eq"><span class="id" title="axiom">eq</span></a>: <a class="idref" href="Diqt.Keys.html#Eq.A"><span class="id" title="axiom">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Diqt.Keys.html#Eq.A"><span class="id" title="axiom">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="Eq.eq_spec" class="idref" href="#Eq.eq_spec"><span class="id" title="axiom">eq_spec</span></a>: <span class="id" title="keyword">∀</span> <a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a> <a id="y:4" class="idref" href="#y:4"><span class="id" title="binder">y</span></a> : <a class="idref" href="Diqt.Keys.html#Eq.A"><span class="id" title="axiom">A</span></a>, <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Bool.Bool.html#reflect"><span class="id" title="inductive">reflect</span></a> (<a class="idref" href="Diqt.Keys.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Diqt.Keys.html#y:4"><span class="id" title="variable">y</span></a>) (<a class="idref" href="Diqt.Keys.html#Eq.eq"><span class="id" title="axiom">eq</span></a> <a class="idref" href="Diqt.Keys.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="Diqt.Keys.html#y:4"><span class="id" title="variable">y</span></a>).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Diqt.Keys.html#Eq"><span class="id" title="module">Eq</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="HashP" class="idref" href="#HashP"><span class="id" title="module">HashP</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <a class="idref" href="Diqt.Keys.html#Eq"><span class="id" title="module">Eq</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="HashP.hash" class="idref" href="#HashP.hash"><span class="id" title="axiom">hash</span></a>: <a class="idref" href="Diqt.Keys.html#HashP.A"><span class="id" title="axiom">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Diqt.Keys.html#HashP"><span class="id" title="module">HashP</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="HashI" class="idref" href="#HashI"><span class="id" title="module">HashI</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <a class="idref" href="Diqt.Keys.html#Eq"><span class="id" title="module">Eq</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="HashI.hash" class="idref" href="#HashI.hash"><span class="id" title="axiom">hash</span></a>: <a class="idref" href="Diqt.Keys.html#HashI.A"><span class="id" title="axiom">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.17.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="var">int</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Diqt.Keys.html#HashI"><span class="id" title="module">HashI</span></a>.<br/>
+
+<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
