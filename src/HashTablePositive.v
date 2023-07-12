@@ -1,12 +1,16 @@
-Require Import ZArith.
-Require Import Keys.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
-Require Import List.
-Require Radix Table.
+From Coq Require Import ZArith List Bool.
+
+Require Radix.
 
 Import ListNotations.
 
-Open Scope uint63_scope.
+Module Type HashP.
+  Parameter A: Set.
+  Parameter eq: A -> A -> bool.
+  Parameter eq_spec: forall x y : A, reflect (x = y) (eq x y).
+
+  Parameter hash: A -> positive.
+End HashP.
 
 (** * HashTablePositive
 
@@ -14,7 +18,7 @@ Open Scope uint63_scope.
 
 Module HashTablePositive (T: HashP).
   Definition t := @Radix.tree T.A.
-  Definition create (B: Set) (_: int) : t B :=
+  Definition create (B: Set) : t B :=
     Radix.empty T.A B.
 
   Definition add {B: Set} (h: t B) (k: T.A) (v: B) :=
@@ -43,7 +47,7 @@ Module HashTablePositive (T: HashP).
   Proof. intros *. apply Radix.find_spec. Qed.
 
   Theorem find_empty:
-    forall B k s, find (create B s) k = None.
+    forall B k, find (create B) k = None.
   Proof. intros *. apply Radix.find_empty. Qed.
 
   Theorem mem_spec:

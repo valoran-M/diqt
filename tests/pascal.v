@@ -1,4 +1,4 @@
-Require Import hashtable dict module int_utils.
+Require Import HashTable HashTablePositive.
 Require Import ZArith Bool.
 Require Import Coq.Numbers.Cyclic.Int63.Uint63.
 Require Import Coq.FSets.FMapAVL.
@@ -61,11 +61,15 @@ Qed.
 
 (* free hash funtion *)
 
-Module INTINT <: Hash_type.
+Module Eq.
   Definition A := intint.
   Definition eq n m := eqb_ii n m.
   Definition eq_spec := eq_spec_ii.
-  Definition hashi (i: A): int :=
+End Eq.
+
+Module INTINT <: HashI.
+  Include Eq.
+  Definition hash (i: A): int :=
     let (n1, n2) := i in
     n1 + n2 * 345.
   Definition hashp (i: A): positive :=

@@ -1,7 +1,4 @@
-Require Import ZArith.
-Require Import Coq.ssr.ssrbool.
-Require Import int_utils.
-Require Import Coq.Lists.List.
+From Coq Require Import ZArith Bool List.
 Import ListNotations.
 
 Open Scope positive_scope.

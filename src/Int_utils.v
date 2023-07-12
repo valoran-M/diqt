@@ -1,6 +1,4 @@
-Require Import ZArith.
-Require Import Lia.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
+From Coq Require Import ZArith Lia Uint63.
 
 Open Scope uint63_scope.
 

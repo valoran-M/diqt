@@ -1,12 +1,18 @@
-Require Import Keys.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
-Require Import List.
-Require Radix Table.
+From Coq Require Import List Uint63 Bool.
+
+Require Table.
 
 Import ListNotations.
 
 Open Scope uint63_scope.
 
+Module Type HashI.
+  Parameter A: Set.
+  Parameter eq: A -> A -> bool.
+  Parameter eq_spec: forall x y : A, reflect (x = y) (eq x y).
+
+  Parameter hash: A -> int.
+End HashI.
 (** * HashTable
 
   Hashtable with PArray *)

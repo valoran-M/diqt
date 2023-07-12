@@ -1,12 +1,7 @@
-Require Import Coq.Array.PArray.
-Require Import Coq.Init.Nat PeanoNat ZArith.
-Require Import Bool.
-Require Import Lia.
-Require Import Coq.Lists.List.
-Require Import Coq.ssr.ssrbool.
-Require Import Coq.Numbers.Cyclic.Int63.Uint63.
-Require Import int_utils.
+From Coq Require Import PArray Nat PeanoNat ZArith Bool Lia List Uint63.
 Import ListNotations.
+
+Require Import Int_utils.
 
 Open Scope uint63_scope.
 

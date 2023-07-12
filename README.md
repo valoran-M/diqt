@@ -7,7 +7,6 @@ Coq hash table library
 * [`src`](./src/) - Source code for hash tables
     * [`src/Table.v`](./src/Table.v) - Hashtable with PArray
     * [`src/Radix.v`](./src/Radix.v) - Hashtable with Radix tree
-    * [`src/Keys.v`](./src/Keys.v) - Module HashI/HashP for Hashtable functor
     * [`src/Hashtable.v`](./src/HashTable.v) - Glue code for Hashtable with
       int keys
     * [`src/HashtablePositive.v`](./src/HashTablePositive.v) - Glue code for
