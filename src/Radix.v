@@ -25,7 +25,7 @@ Section Radix.
   (** ** Tree functions *)
 
   Definition empty : tree := Empty.
-  
+
   Fixpoint get (p: positive) (t: tree) : bucket :=
     match p, t with
     | _,     Empty      => B_Empty
@@ -60,11 +60,11 @@ Section Radix.
   Theorem gss0:
     forall (i: positive) (x: bucket), get i (set0 i x) = x.
   Proof.
-    intros i x. induction i; simpl; auto.  
+    intros i x. induction i; simpl; auto.
   Qed.
 
   Theorem gos0:
-    forall (i j: positive) (x: bucket), 
+    forall (i j: positive) (x: bucket),
     i <> j -> get i (set0 j x) = B_Empty.
   Proof.
     induction i; intros j x H; simpl.
@@ -74,7 +74,7 @@ Section Radix.
   Qed.
 
 
-  Theorem gss: 
+  Theorem gss:
     forall (i: positive) (x: bucket) (t: tree), get i (set i x t) = x.
   Proof.
     induction i; destruct t; simpl; auto; try apply IHi; now rewrite gss0.
@@ -110,7 +110,7 @@ Section Radix.
   Fixpoint find_all_rec (l: bucket) (h: positive) (k: A) (acc: list B): list B :=
     match l with
     | B_Empty => List.rev' acc
-    | B_Cons h' k' v l' => 
+    | B_Cons h' k' v l' =>
         if if h =? h' then eq k k' else false
         then find_all_rec l' h k (v :: acc)
         else find_all_rec l' h k acc
@@ -180,6 +180,7 @@ Section Radix.
   Qed.
 
   (** find_all *)
+
   Fixpoint find_all_rec' (l: bucket) (h: positive) (k: A) : list B :=
     match l with
     | B_Empty => nil

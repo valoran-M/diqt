@@ -1,6 +1,7 @@
 -R src Diqt
-src/table.v
-src/keys.v
-src/module.v
-src/radix.v
-src/int_utils.v
+src/Table.v
+src/Keys.v
+src/Radix.v
+src/Int_utils.v
+src/HashTable.v
+src/HashTablePositive.v
