@@ -98,7 +98,7 @@ Definition fold_int {T: Type} (f : int -> T -> T) (e: int) (acc: T) :=
 
 Lemma suc_sub:
   forall n m,
-  m < n ->
+  (m < n)%nat ->
   (S (n - S m) = n - m)%nat.
 Proof.
   intros n.
