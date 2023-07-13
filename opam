@@ -18,7 +18,7 @@ tags: [
   "keyword:dictionaries" 
   "category:Computer Science/Data Types and Data Structures"
   "logpath:Diqt"
-  "date:2023-07-10" ]
+   ]
 authors: [ "Valeran Maytié <valeran.maytie@universite-paris-saclay.fr>" ]
 synopsis:
   "Formalization of hashtables with Radix trees and PArray"
