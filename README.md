@@ -16,8 +16,6 @@ Coq hash table library
 * [`tests`](./tests/) - Test code
     * [`tests/fibo.v`](./tests/fibo.v) - Hashtable int test on Fibonacci function
     * [`test/pascal.v`](./tests/pascal.v) - HashTable int test on Pascal function
-    * [`test/pascal_pos.v`](./tests/pascal_pos.v) - HashTable positive test on
-      Pascal function
     * [`test/syracuse.v`](./tests/syracuse.v) - HashTable int test on Syracuse
       function
     * [`test/syracuse_pos.v`](./tests/syracuse_pos.v) - HashTable positive test

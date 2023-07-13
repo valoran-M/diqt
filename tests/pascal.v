@@ -1,4 +1,4 @@
-Require Import HashTable HashTablePositive.
+Require Import HashTable HashTablePositive Int_utils.
 Require Import ZArith Bool.
 Require Import Coq.Numbers.Cyclic.Int63.Uint63.
 Require Import Coq.FSets.FMapAVL.
@@ -72,13 +72,17 @@ Module INTINT <: HashI.
   Definition hash (i: A): int :=
     let (n1, n2) := i in
     n1 + n2 * 345.
-  Definition hashp (i: A): positive :=
-    let hi := hashi i in
+End INTINT.
+
+Module INTINTP <: HashP.
+  Include Eq.
+  Definition hash (i: A): positive :=
+    let hi := INTINT.hash i in
     match to_Z hi with
     | Z.pos p => p
     | _ => xH
     end.
-End INTINT.
+End INTINTP.
 
 (* nat couple *)
 
@@ -114,24 +118,33 @@ Qed.
 
 (* expensive hash funtion *)
 
-Module NATNAT <: Hash_type.
+Module Eqnn.
   Definition A := natnat.
   Definition eq n m := eqb_nn n m.
   Definition eq_spec := eq_spec.
-  Definition hashi (i: natnat): int :=
+End Eqnn.
+
+Module NATNAT <: HashI.
+  Include Eqnn.
+  Definition hash (i: A): int :=
     let (n1, n2) := i in
     hash n1 (hash n2 0).
-  Definition hashp (i: natnat): positive :=
-    let hi := hashi i in
+End NATNAT.
+
+Module NATNATP <: HashP.
+  Include Eqnn.
+  Definition hash (i: A): positive :=
+    let (n1, n2) := i in
+    let hi := hash n1 (hash n2 0) in
     match to_Z hi with
     | Z.pos p => p
     | _ => xH
     end.
-End NATNAT.
+End NATNATP.
 
 (* Pascal memo with tuple of int *)
-
-Module ITest (H: HashTable INTINT).
+Module HashtableITest.
+  Module H := HashTable INTINT.
 
   Fixpoint pascal_memo' (n m: nat) (ni mi : int) (h: H.t int) : (int * H.t int) :=
     match H.find h (I ni mi) with
@@ -144,19 +157,44 @@ Module ITest (H: HashTable INTINT).
       | S n', S m' =>
           let (v1, h1) := pascal_memo' n' m' (ni-1) (mi -1) h in
           let (v2, h2) := pascal_memo' n' m (ni-1) mi h1 in
-        let r := v1 + v2 in
-        (r, H.add h2 (I ni mi) r)
+          let r := v1 + v2 in
+          (r, H.add h2 (I ni mi) r)
       end
     end.
 
   Definition pascal_memo n m :=
     fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (of_Z n) (of_Z m) (H.create int 16)).
 
-End ITest.
+End HashtableITest.
+
+Module HashTablePositiveITest.
+  Module H := HashTablePositive INTINTP.
+
+  Fixpoint pascal_memo' (n m: nat) (ni mi : int) (h: H.t int) : (int * H.t int) :=
+    match H.find h (I ni mi) with
+    | Some v => (v, h)
+    | None =>
+      match n, m with
+      | 0, 0 => (1, h)
+      | 0, _ => (0, h)
+      | _, 0 => (1, h)
+      | S n', S m' =>
+          let (v1, h1) := pascal_memo' n' m' (ni-1) (mi -1) h in
+          let (v2, h2) := pascal_memo' n' m (ni-1) mi h1 in
+          let r := v1 + v2 in
+          (r, H.add h2 (I ni mi) r)
+      end
+    end.
+
+  Definition pascal_memo n m :=
+    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (of_Z n) (of_Z m) (H.create int)).
+
+End HashTablePositiveITest.
 
 (* Pascal memo with tuple of nat *)
 
-Module NTest (H: HashTable NATNAT).
+Module HashTableNTest.
+  Module H := HashTable NATNAT.
 
   Fixpoint pascal_memo' (n m: nat) (h: H.t int) : (int * H.t int) :=
     match H.find h (N n m) with
@@ -187,7 +225,7 @@ Module NTest (H: HashTable NATNAT).
     cut (forall ht, ok ht -> ok (snd (pascal_memo' n m ht))
           /\ fst (pascal_memo' n m ht) = pascal n m). intros H.
     apply H. unfold ok. intros n' m' i.
-    rewrite H.hempty. easy.
+    rewrite H.find_empty. easy.
     revert m. induction n.
     + intros [| m] ht Hht; simpl.
       - case H.find eqn:Hf. simpl. split. easy.
@@ -215,15 +253,38 @@ Module NTest (H: HashTable NATNAT).
           2:discriminate. rewrite Hn, H.add_same.
           simpl. injection Hn. intros -> ->. simpl. intros H. injection H.
           intros <-. reflexivity.
-        * rewrite H.add_diff. intros Hf. rewrite (Ot0 n' m') at 1.
+        * rewrite H.add_other. intros Hf. rewrite (Ot0 n' m') at 1.
           reflexivity. rewrite H.find_spec. easy.
           unfold NATNAT.eq in Hnn.
           case (NATNAT.eq_spec (N n' m') (N (S n) (S m))) as [|Hn] in Hnn.
           discriminate. easy.
   Qed.
 
-End NTest.
+End HashTableNTest.
 
+Module HashTablePositiveNTest.
+  Module H := HashTablePositive NATNATP.
+
+  Fixpoint pascal_memo' (n m: nat) (h: H.t int) : (int * H.t int) :=
+    match H.find h (N n m) with
+    | Some v => (v, h)
+    | None =>
+      match n, m with
+      | 0, 0 => (1, h)
+      | 0, _ => (0, h)
+      | _, 0 => (1, h)
+      | S n', S m' =>
+          let (v1, h1) := pascal_memo' n' m' h in
+          let (v2, h2) := pascal_memo' n' m h1 in
+        let r := v1 + v2 in
+        (r, H.add h2 (N n m) r)
+      end
+    end.
+
+  Definition pascal_memo n m :=
+    fst (pascal_memo' (Z.to_nat n) (Z.to_nat m) (H.create int)).
+
+End HashTablePositiveNTest.
 (* FINTINT Key type for FMap AVL in stdlib *)
 
 Module FINTINT.
@@ -309,7 +370,7 @@ Module FINTINT.
     intros [x1 x2] [y1 y2] H.
     unfold compare_def in H.
     unfold eq, eqb_ii.
-    apply andb_true_iff. rewrite 2!eqbP_true_to_Z.
+    apply andb_true_iff. rewrite 2!eqbPT_to_Z.
     case (x1 ?= y1) eqn:H1; try discriminate.
     rewrite compare_spec in *.
     split; now apply Z.compare_eq.
@@ -320,7 +381,7 @@ Module FINTINT.
   Proof.
     intros [x1 x2] [y1 y2] H.
     unfold compare_def in H. unfold lt.
-    apply orb_true_iff. rewrite andb_true_iff, eqbP_true_to_Z.
+    apply orb_true_iff. rewrite andb_true_iff, eqbPT_to_Z.
     case (x1 ?= y1) eqn:H1; try discriminate.
     + rewrite compare_spec in *. right. split.
       now apply Z.compare_eq in H1.
@@ -334,7 +395,7 @@ Module FINTINT.
   Proof.
     intros [x1 x2] [y1 y2] H.
     unfold compare_def in H. unfold lt.
-    apply orb_true_iff. rewrite andb_true_iff, eqbP_true_to_Z.
+    apply orb_true_iff. rewrite andb_true_iff, eqbPT_to_Z.
     case (x1 ?= y1) eqn:H1; try discriminate.
     + right. rewrite compare_spec in *. split.
       now apply Z.compare_eq in H1.
@@ -392,20 +453,11 @@ End FTest.
 
 (* tests *)
 
-Module HTreeNN := HashTableTree NATNAT.
-Module NTestTree := NTest HTreeNN.
-
-Module HBucketNN := HashTableBucket NATNAT.
-Module NTestBucket := NTest HBucketNN.
-
-Module HTree := HashTableTree INTINT.
-Module ITestTree := ITest HTree.
-
-Module HBucket := HashTableBucket INTINT.
-Module ITestBucket := ITest HBucket.
-
-(* Time Compute ITestTree.pascal_memo 500 250. *)
-(* Time Compute ITestBucket.pascal_memo 500 250. *)
+Time Compute HashtableITest.pascal_memo 500 250.
+Time Compute HashTablePositiveITest.pascal_memo 500 250.
+Time Compute HashTableNTest.pascal_memo 500 250.
+Time Compute HashTablePositiveNTest.pascal_memo 500 250.
+Time Compute FTest.pascal_memo 500 250.
 
 
 (* results:
@@ -437,12 +489,12 @@ Module ITestBucket := ITest HBucket.
       (* FMap *)
       { Time Compute FTest.pascal_memo ii n. }
       (* NRadix *)
-      { Time Compute NTestTree.pascal_memo ii n. }
+      { Time Compute HashTablePositiveNTest.pascal_memo ii n. }
       (* NBucket *)
-      { Time Compute NTestBucket.pascal_memo ii n. }
+      { Time Compute HashtableNTest.pascal_memo ii n. }
       (* IRadix *)
-      { Time Compute ITestTree.pascal_memo ii n. }
+      { Time Compute HashTablePositiveITest.pascal_memo ii n. }
       (* IBucket *)
-      { Time Compute ITestBucket.pascal_memo ii n. }
+      { Time Compute HashtableITest.pascal_memo ii n. }
  @*)
 
