@@ -1,7 +1,7 @@
 # Diqt: Formalization of hashtables with Radix trees and PArray in Coq
 
 This library provides two hashtable structures. They use either Radix trees
-and positive integers, or persistant arrays `Coq.PArray` and machine integers.
+and positive integers, or persistent arrays `Coq.PArray` and machine integers.
 Their purpose is to be efficient when evaluating the code with Coq's virtual
 machine `vm_compute`.
 
